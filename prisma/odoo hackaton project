@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MANAGER
+  STAFF
+}
+
+model User {
+  id                 String       @id @default(cuid())
+  loginId            String       @unique
+  email              String       @unique
+  password           String
+  name               String?
+  role               Role         @default(STAFF)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  receiptsCreated    Receipt[]    @relation("ReceiptCreatedBy")
+  deliveriesCreated  Delivery[]   @relation("DeliveryCreatedBy")
+  adjustmentsCreated Adjustment[] @relation("AdjustmentCreatedBy")
+  ledgerEntries      StockLedger[] @relation("LedgerCreatedBy")
+}
+
+model Warehouse {
+  id         String     @id @default(cuid())
+  name       String
+  shortCode  String     @unique
+  address    String?
+  locations  Location[]
+  receipts   Receipt[]
+  deliveries Delivery[]
+}
+
+model Location {
+  id          String        @id @default(cuid())
+  name        String
+  shortCode   String
+  warehouseId String
+  warehouse   Warehouse     @relation(fields: [warehouseId], references: [id])
+  stocks      Stock[]
+  receipts    Receipt[]
+  deliveries  Delivery[]
+  adjustments Adjustment[]
+  ledger      StockLedger[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  products Product[]
+}
+
+model Product {
+  id            String         @id @default(cuid())
+  name          String
+  sku           String         @unique
+  categoryId    String
+  category      Category       @relation(fields: [categoryId], references: [id])
+  unit          String
+  costPerUnit   Float          @default(0)
+  reorderPoint  Int            @default(0)
+  stocks        Stock[]
+  receiptLines  ReceiptLine[]
+  deliveryLines DeliveryLine[]
+  adjustments   Adjustment[]
+  ledger        StockLedger[]
+}
+
+model Stock {
+  id         String   @id @default(cuid())
+  productId  String
+  locationId String
+  onHand     Int      @default(0)
+  reserved   Int      @default(0)
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
+
+  @@unique([productId, locationId])
+}
+
+enum ReceiptStatus {
+  DRAFT
+  READY
+  DONE
+}
+
+enum DeliveryStatus {
+  DRAFT
+  READY
+  WAITING
+  DONE
+}
+
+enum AdjustmentType {
+  INCREASE
+  DECREASE
+}
+
+enum LedgerType {
+  RECEIPT
+  DELIVERY
+  ADJUSTMENT
+}
+
+model Receipt {
+  id          String        @id @default(cuid())
+  referenceNo String        @unique
+  warehouseId String
+  locationId  String
+  status      ReceiptStatus @default(DRAFT)
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  warehouse Warehouse   @relation(fields: [warehouseId], references: [id])
+  location  Location    @relation(fields: [locationId], references: [id])
+  createdBy User        @relation("ReceiptCreatedBy", fields: [createdById], references: [id])
+  lines     ReceiptLine[]
+}
+
+model ReceiptLine {
+  id        String  @id @default(cuid())
+  receiptId String
+  productId String
+  quantity  Int
+  unitCost  Float   @default(0)
+
+  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([receiptId, productId])
+}
+
+model Delivery {
+  id          String         @id @default(cuid())
+  referenceNo String         @unique
+  warehouseId String
+  locationId  String
+  status      DeliveryStatus @default(DRAFT)
+  createdById String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  warehouse Warehouse    @relation(fields: [warehouseId], references: [id])
+  location  Location     @relation(fields: [locationId], references: [id])
+  createdBy User         @relation("DeliveryCreatedBy", fields: [createdById], references: [id])
+  lines     DeliveryLine[]
+}
+
+model DeliveryLine {
+  id         String   @id @default(cuid())
+  deliveryId String
+  productId  String
+  quantity   Int
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@unique([deliveryId, productId])
+}
+
+model Adjustment {
+  id          String         @id @default(cuid())
+  referenceNo String         @unique
+  locationId  String
+  productId   String
+  type        AdjustmentType
+  quantity    Int
+  reason      String?
+  createdById String
+  createdAt   DateTime       @default(now())
+
+  location  Location @relation(fields: [locationId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  createdBy User     @relation("AdjustmentCreatedBy", fields: [createdById], references: [id])
+}
+
+model StockLedger {
+  id            String     @id @default(cuid())
+  productId     String
+  locationId    String
+  type          LedgerType
+  quantity      Int
+  beforeQuantity Int
+  afterQuantity Int
+  referenceType String
+  referenceNo   String
+  note          String?
+  createdById   String
+  createdAt     DateTime   @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id])
+  location  Location @relation(fields: [locationId], references: [id])
+  createdBy User     @relation("LedgerCreatedBy", fields: [createdById], references: [id])
+
+  @@index([productId, locationId])
+  @@index([referenceNo])
+  @@index([createdAt])
+}
