@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export function useAsyncData<T>(
-  asyncFn: () => Promise<T>,
+  loader: () => Promise<T>,
   deps: any[] = []
 ): {
   data: T | null;
@@ -17,10 +17,10 @@ export function useAsyncData<T>(
     setIsLoading(true);
     setError(null);
     try {
-      const result = await asyncFn();
+      const result = await loader();
       setData(result);
     } catch (err: any) {
-      setError(err?.message || 'An unexpected error occurred');
+      setError(err?.message || 'Failed to load data');
     } finally {
       setIsLoading(false);
     }

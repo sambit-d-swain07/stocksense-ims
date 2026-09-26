@@ -8,7 +8,11 @@ export interface ViewToggleProps {
 
 export const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) => {
   return (
-    <div className="inline-flex rounded-lg border border-surface-200 p-0.5 bg-surface-100/60" role="group" aria-label="View switch">
+    <div
+      className="inline-flex rounded-lg border border-surface-200 p-0.5 bg-surface-100/60"
+      role="group"
+      aria-label="View mode toggle"
+    >
       <button
         type="button"
         onClick={() => onViewChange('list')}
