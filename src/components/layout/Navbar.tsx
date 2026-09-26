@@ -18,7 +18,7 @@ export const Navbar: React.FC = () => {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    // Placeholder for tomorrow's domain navigation
+    { href: '/operations/receipts', label: 'Receipts' },
   ];
 
   return (
