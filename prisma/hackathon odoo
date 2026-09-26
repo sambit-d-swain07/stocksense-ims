@@ -108,6 +108,7 @@ enum LedgerType {
   ADJUSTMENT
 }
 
+
 model Receipt {
   id          String        @id @default(cuid())
   referenceNo String        @unique
