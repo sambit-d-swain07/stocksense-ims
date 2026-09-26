@@ -4,8 +4,8 @@ export const INITIAL_CATEGORIES: Category[] = [
   { id: 'cat-1', name: 'Raw Materials' },
   { id: 'cat-2', name: 'Finished Goods' },
   { id: 'cat-3', name: 'Packaging' },
-  { id: 'cat-4', name: 'Office Furniture' },
-  { id: 'cat-5', name: 'Electronics' },
+  { id: 'cat-4', name: 'Furniture' },
+  { id: 'cat-5', name: 'Hardware' },
 ];
 
 export const INITIAL_WAREHOUSES: Warehouse[] = [
@@ -52,6 +52,16 @@ export const INITIAL_LOCATIONS: Location[] = [
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
+    id: 'prod-0',
+    name: 'Steel Rods 10mm Standard Grade',
+    sku: 'RM-STL-001',
+    categoryId: 'cat-1',
+    unit: 'kg',
+    costPrice: 55,
+    onHand: 7,
+    reserved: 2,
+  },
+  {
     id: 'prod-1',
     name: 'Steel Rods 12mm High Tensile',
     sku: 'STL-ROD-012',
@@ -65,7 +75,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 'prod-2',
     name: 'Industrial Hex Bolts M8',
     sku: 'BLT-HEX-008',
-    categoryId: 'cat-1',
+    categoryId: 'cat-5',
     unit: 'Units',
     costPrice: 4.5,
     onHand: 1200,
