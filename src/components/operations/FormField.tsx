@@ -19,15 +19,16 @@ export const FormField: React.FC<FormFieldProps> = ({
 }) => {
   return (
     <div className={`space-y-1.5 ${className}`}>
-      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-        {label} {required && <span className="text-red-500">*</span>}
+      <label className="block text-[12px] font-bold text-surface-500 uppercase tracking-wider">
+        {label} {required && <span className="text-coral-text">*</span>}
       </label>
       {children}
       {error ? (
-        <p className="text-xs text-red-600 font-medium">{error}</p>
+        <p className="text-xs text-coral-text font-medium">{error}</p>
       ) : helperText ? (
-        <p className="text-xs text-slate-500">{helperText}</p>
+        <p className="text-xs text-surface-500">{helperText}</p>
       ) : null}
     </div>
   );
 };
+

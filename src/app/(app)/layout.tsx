@@ -97,14 +97,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl">
           <div className="w-7 h-7 rounded-full bg-[#F4F4F4] border border-[#E2E2E2] flex items-center justify-center flex-shrink-0">
             <span className="text-[11px] font-bold text-[#141414]">
-              {(user.name || user.loginId).charAt(0).toUpperCase()}
+              {(user?.name || user?.loginId || 'U').charAt(0).toUpperCase()}
             </span>
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-semibold text-[#141414] truncate leading-none">
-              {user.name || user.loginId}
+              {user?.name || user?.loginId || 'User'}
             </p>
-            <p className="text-[11px] text-[#A9A9A9] truncate mt-0.5">{user.role || 'STAFF'}</p>
+            <p className="text-[11px] text-[#A9A9A9] truncate mt-0.5">{user?.role || 'STAFF'}</p>
           </div>
           <button
             onClick={handleLogout}

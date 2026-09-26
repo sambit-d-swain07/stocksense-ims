@@ -83,27 +83,27 @@ export const StockRow: React.FC<StockRowProps> = ({
 
   return (
     <tr
-      className={`transition-colors text-sm ${
+      className={`h-[56px] transition-colors text-sm ${
         recentlyUpdated
-          ? 'bg-emerald-50 transition-colors duration-1000'
+          ? 'bg-leaf-tint/70 transition-colors duration-1000'
           : isEditing
-          ? 'bg-brand-50/40'
+          ? 'bg-brand-50/60'
           : 'hover:bg-surface-50'
       }`}
     >
       {/* Product */}
-      <td className="px-6 py-4 align-top text-left">
-        <div className="font-semibold text-surface-900">{item.productName}</div>
-        <div className="text-xs text-slate-500 font-mono mt-0.5">{item.sku}</div>
+      <td className="px-6 py-3.5 align-middle text-left">
+        <div className="font-semibold text-ink">{item.productName}</div>
+        <div className="text-xs text-surface-500 font-mono mt-0.5">{item.sku}</div>
       </td>
 
       {/* Per Unit Cost */}
-      <td className="px-6 py-4 align-top text-right font-mono tabular-nums text-surface-900">
+      <td className="px-6 py-3.5 align-middle text-right font-mono tabular text-surface-700 font-medium">
         {formatCurrencyINR(item.costPerUnit)}
       </td>
 
       {/* On Hand */}
-      <td className="px-6 py-4 align-top text-right">
+      <td className="px-6 py-3.5 align-middle text-right">
         {isEditing ? (
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center justify-end gap-1.5">
@@ -118,38 +118,38 @@ export const StockRow: React.FC<StockRowProps> = ({
                   if (error) setError(null);
                 }}
                 onKeyDown={handleKeyDown}
-                className={`w-24 px-2.5 py-1 text-sm font-mono text-right rounded-md border focus:outline-none focus:ring-2 ${
+                className={`w-24 px-3 py-1.5 text-sm font-mono tabular text-right rounded-xl border focus:outline-none focus:ring-2 ${
                   error
-                    ? 'border-red-300 bg-red-50 text-red-900 focus:ring-red-200 focus:border-red-500'
-                    : 'border-surface-300 bg-white text-surface-900 focus:ring-brand-500 focus:border-brand-500'
+                    ? 'border-coral bg-coral-tint text-coral-text focus:ring-coral/20'
+                    : 'border-surface-300 bg-white text-ink focus:ring-brand-600/20 focus:border-brand-600'
                 }`}
               />
-              <span className="text-xs text-slate-500">{item.unit}</span>
+              <span className="text-xs text-surface-500">{item.unit}</span>
             </div>
             {error && (
-              <p className="text-xs text-red-600 font-medium text-right mt-0.5">{error}</p>
+              <p className="text-xs text-coral-text font-medium text-right mt-0.5">{error}</p>
             )}
           </div>
         ) : (
-          <div className="font-mono tabular-nums text-surface-900">
-            {item.onHand} <span className="text-xs text-slate-500 font-normal">{item.unit}</span>
+          <div className="font-mono tabular font-bold text-ink">
+            {item.onHand} <span className="text-xs text-surface-500 font-normal">{item.unit}</span>
           </div>
         )}
       </td>
 
       {/* Free to Use */}
-      <td className="px-6 py-4 align-top text-right">
+      <td className="px-6 py-3.5 align-middle text-right">
         <div
-          className={`font-mono tabular-nums ${
-            freeToUse <= 0 ? 'text-amber-700 font-semibold' : 'text-surface-900'
+          className={`font-mono tabular ${
+            freeToUse <= 0 ? 'text-honey-text font-bold' : 'text-surface-700 font-medium'
           }`}
         >
-          {freeToUse} <span className="text-xs text-slate-500 font-normal">{item.unit}</span>
+          {freeToUse} <span className="text-xs text-surface-500 font-normal">{item.unit}</span>
         </div>
       </td>
 
       {/* Actions */}
-      <td className="px-6 py-4 align-top text-right">
+      <td className="px-6 py-3.5 align-middle text-right">
         {isEditing ? (
           <div className="flex items-center justify-end gap-1.5">
             <Button
@@ -158,6 +158,7 @@ export const StockRow: React.FC<StockRowProps> = ({
               size="sm"
               isLoading={isSaving}
               onClick={handleSaveSubmit}
+              className="rounded-full px-3"
               aria-label="Save quantity"
             >
               {!isSaving && <Check className="w-3.5 h-3.5" />}
@@ -168,9 +169,10 @@ export const StockRow: React.FC<StockRowProps> = ({
               size="sm"
               disabled={isSaving}
               onClick={onCancel}
+              className="rounded-full px-3"
               aria-label="Cancel editing"
             >
-              <X className="w-3.5 h-3.5 text-slate-500" />
+              <X className="w-3.5 h-3.5 text-surface-500" />
             </Button>
           </div>
         ) : (
@@ -179,10 +181,10 @@ export const StockRow: React.FC<StockRowProps> = ({
             variant="outline"
             size="sm"
             onClick={onStartEdit}
-            className="gap-1 text-xs"
+            className="gap-1 text-xs rounded-full px-3 text-brand-600 border-brand-200 hover:bg-brand-50"
             aria-label={`Update stock for ${item.productName}`}
           >
-            <Pencil className="w-3.5 h-3.5 text-slate-500" />
+            <Pencil className="w-3.5 h-3.5 text-brand-600" />
             <span>Update</span>
           </Button>
         )}
@@ -190,3 +192,4 @@ export const StockRow: React.FC<StockRowProps> = ({
     </tr>
   );
 };
+

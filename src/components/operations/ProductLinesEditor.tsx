@@ -53,22 +53,22 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-surface-200">
+    <div className="space-y-4">
+      <div className="overflow-x-auto rounded-inner border border-surface-200 bg-surface-50/50 p-1">
         <table className="w-full text-left border-collapse min-w-[500px]">
           <thead>
-            <tr className="bg-surface-50 border-b border-surface-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="px-4 py-3 w-1/2">Product</th>
+            <tr className="bg-surface-100/70 border-b border-surface-200 text-[11px] font-bold text-surface-500 uppercase tracking-wider">
+              <th className="px-4 py-3 w-1/2 rounded-l-lg">Product</th>
               <th className="px-4 py-3 w-1/3 text-right">Quantity</th>
-              {!readOnly && <th className="px-4 py-3 w-16 text-center">Action</th>}
+              {!readOnly && <th className="px-4 py-3 w-16 text-center rounded-r-lg">Action</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-100 text-sm">
+          <tbody className="divide-y divide-surface-200/60 text-sm">
             {lines.length === 0 ? (
               <tr>
                 <td
                   colSpan={readOnly ? 2 : 3}
-                  className="px-4 py-6 text-center text-xs text-slate-400"
+                  className="px-4 py-6 text-center text-xs text-surface-400"
                 >
                   No product lines added yet.
                 </td>
@@ -79,13 +79,19 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
                 const lineError = errors[`line_${idx}`] || errors[`line_${line.id}`];
 
                 return (
-                  <tr key={line.id || idx} className="hover:bg-surface-50/50 transition-colors">
+                  <tr key={line.id || idx} className="hover:bg-white/60 transition-colors">
                     {/* Product Selection */}
                     <td className="px-4 py-3 align-top">
                       {readOnly ? (
                         <div>
-                          <span className="font-semibold text-surface-900">
-                            {selectedProd ? `${selectedProd.name} · ${selectedProd.sku}` : line.productId}
+                          <span className="font-semibold text-ink">
+                            {selectedProd ? (
+                              <>
+                                {selectedProd.name} · <span className="font-mono text-surface-500">{selectedProd.sku}</span>
+                              </>
+                            ) : (
+                              line.productId
+                            )}
                           </span>
                         </div>
                       ) : (
@@ -93,10 +99,10 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
                           <select
                             value={line.productId}
                             onChange={(e) => handleProductChange(idx, e.target.value)}
-                            className={`w-full px-3 py-1.5 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 ${
+                            className={`w-full px-3 py-2 text-sm bg-white border rounded-xl focus:outline-none focus:ring-2 ${
                               lineError
-                                ? 'border-red-300 focus:ring-red-200 focus:border-red-500'
-                                : 'border-surface-200 focus:ring-brand-500'
+                                ? 'border-coral focus:ring-coral/20'
+                                : 'border-surface-200 focus:ring-brand-600/20 focus:border-brand-600'
                             }`}
                           >
                             <option value="">Select a product...</option>
@@ -111,7 +117,7 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
                             })}
                           </select>
                           {lineError && (
-                            <p className="text-xs text-red-600 font-medium">{lineError}</p>
+                            <p className="text-xs text-coral-text font-medium">{lineError}</p>
                           )}
                         </div>
                       )}
@@ -120,8 +126,8 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
                     {/* Quantity */}
                     <td className="px-4 py-3 align-top text-right">
                       {readOnly ? (
-                        <div className="font-mono tabular-nums font-semibold text-surface-900">
-                          {line.quantity} <span className="text-xs text-slate-500 font-normal">{selectedProd?.unit || 'Units'}</span>
+                        <div className="font-mono tabular font-semibold text-ink">
+                          {line.quantity} <span className="text-xs text-surface-500 font-normal">{selectedProd?.unit || 'Units'}</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-2">
@@ -130,9 +136,9 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
                             min="1"
                             value={line.quantity || ''}
                             onChange={(e) => handleQuantityChange(idx, e.target.value)}
-                            className="w-24 px-2.5 py-1.5 text-sm font-mono text-right rounded-lg border border-surface-200 bg-white text-surface-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            className="w-24 px-3 py-2 text-sm font-mono tabular text-right rounded-xl border border-surface-200 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600"
                           />
-                          <span className="text-xs text-slate-500 min-w-[32px] text-left">
+                          <span className="text-xs text-surface-500 min-w-[32px] text-left">
                             {selectedProd?.unit || 'Units'}
                           </span>
                         </div>
@@ -146,7 +152,7 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
                           type="button"
                           disabled={lines.length <= 1}
                           onClick={() => handleRemoveLine(idx)}
-                          className="p-1 text-slate-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="p-2 text-surface-400 hover:text-coral-text disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded-lg hover:bg-coral-tint/50"
                           aria-label="Remove row"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -167,7 +173,7 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
           variant="outline"
           size="sm"
           onClick={handleAddLine}
-          className="gap-1.5 border-dashed text-slate-700 hover:text-surface-900"
+          className="gap-2 border-dashed text-brand-600 border-brand-300 hover:bg-brand-50 rounded-full px-4 font-semibold"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Product</span>
@@ -176,3 +182,4 @@ export const ProductLinesEditor: React.FC<ProductLinesEditorProps> = ({
     </div>
   );
 };
+

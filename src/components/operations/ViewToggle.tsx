@@ -9,7 +9,7 @@ export interface ViewToggleProps {
 export const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) => {
   return (
     <div
-      className="inline-flex rounded-lg border border-surface-200 p-0.5 bg-surface-100/60"
+      className="inline-flex rounded-full border border-surface-200 p-1 bg-surface-100/80"
       role="group"
       aria-label="View mode toggle"
     >
@@ -18,10 +18,10 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) =>
         onClick={() => onViewChange('list')}
         aria-label="List view"
         aria-pressed={view === 'list'}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
           view === 'list'
-            ? 'bg-white text-surface-900 shadow-sm font-semibold'
-            : 'text-slate-600 hover:text-surface-900 hover:bg-white/50'
+            ? 'bg-white text-ink shadow-sm font-semibold'
+            : 'text-surface-600 hover:text-ink'
         }`}
       >
         <List className="w-4 h-4" />
@@ -33,10 +33,10 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) =>
         onClick={() => onViewChange('kanban')}
         aria-label="Kanban view"
         aria-pressed={view === 'kanban'}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
           view === 'kanban'
-            ? 'bg-white text-surface-900 shadow-sm font-semibold'
-            : 'text-slate-600 hover:text-surface-900 hover:bg-white/50'
+            ? 'bg-white text-ink shadow-sm font-semibold'
+            : 'text-surface-600 hover:text-ink'
         }`}
       >
         <LayoutGrid className="w-4 h-4" />
@@ -45,3 +45,4 @@ export const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) =>
     </div>
   );
 };
+

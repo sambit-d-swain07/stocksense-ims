@@ -9,12 +9,12 @@ export interface LoadingStateProps {
 }
 
 export const LoadingState: React.FC<LoadingStateProps> = ({
-  message = 'Loading receipts...',
+  message = 'Loading data...',
 }) => {
   return (
-    <div className="py-16 flex flex-col items-center justify-center text-center">
+    <div className="py-20 flex flex-col items-center justify-center text-center">
       <Spinner size="lg" />
-      <p className="mt-4 text-sm text-slate-500 font-medium">{message}</p>
+      <p className="mt-4 text-sm text-surface-500 font-medium">{message}</p>
     </div>
   );
 };
@@ -33,15 +33,15 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
 }) => {
   return (
-    <div className="py-16 flex flex-col items-center justify-center text-center p-8 bg-white border border-surface-200/80 rounded-xl shadow-sm">
-      <div className="w-12 h-12 rounded-xl bg-surface-100 text-slate-400 flex items-center justify-center mb-4">
-        <PackageOpen className="w-6 h-6" />
+    <div className="py-16 flex flex-col items-center justify-center text-center p-8 bg-white border border-surface-200 rounded-card shadow-card">
+      <div className="w-[44px] h-[44px] rounded-full bg-surface-100 text-surface-500 flex items-center justify-center mb-4 shadow-inner">
+        <PackageOpen className="w-5 h-5" />
       </div>
-      <h3 className="text-base font-semibold text-surface-900">{title}</h3>
-      <p className="text-sm text-slate-500 mt-1 max-w-sm">{description}</p>
+      <h3 className="text-[15px] font-semibold text-ink">{title}</h3>
+      <p className="text-[13px] text-surface-500 mt-1 max-w-sm">{description}</p>
       {actionText && onAction && (
         <div className="mt-6">
-          <Button variant="outline" size="sm" onClick={onAction}>
+          <Button variant="primary" size="sm" onClick={onAction} className="rounded-full px-5">
             {actionText}
           </Button>
         </div>
@@ -61,7 +61,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({ message, onRetry }) => {
       <Toast message={message} type="error" />
       {onRetry && (
         <div className="flex justify-center">
-          <Button variant="outline" size="sm" onClick={onRetry}>
+          <Button variant="outline" size="sm" onClick={onRetry} className="rounded-full">
             Retry Loading
           </Button>
         </div>
@@ -69,3 +69,4 @@ export const ErrorState: React.FC<ErrorStateProps> = ({ message, onRetry }) => {
     </div>
   );
 };
+

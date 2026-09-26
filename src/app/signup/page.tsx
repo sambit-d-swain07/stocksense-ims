@@ -58,11 +58,11 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormData) => {
     setGeneralError(null);
     try {
-      const res = await registerAuth({
-        loginId: data.loginId.trim(),
-        email: data.email.trim(),
-        password: data.password,
-      });
+      const res = await registerAuth(
+        data.loginId.trim(),
+        data.email.trim(),
+        data.password
+      );
 
       if (res.success) {
         router.replace('/dashboard');

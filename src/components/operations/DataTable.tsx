@@ -25,15 +25,15 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="w-full bg-white border border-surface-200/80 rounded-xl shadow-sm overflow-hidden">
+    <div className="w-full bg-white border border-surface-200 rounded-card shadow-card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[720px]">
           <thead>
-            <tr className="bg-surface-50 border-b border-surface-200/80 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <tr className="bg-surface-50/80 border-b border-surface-200 text-[12px] font-semibold text-surface-500 uppercase tracking-wider">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-6 py-3.5 ${
+                  className={`px-6 py-4 ${
                     col.align === 'center'
                       ? 'text-center'
                       : col.align === 'right'
@@ -51,7 +51,7 @@ export function DataTable<T extends { id: string }>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-6 py-12 text-center text-slate-500 text-sm"
+                  className="px-6 py-12 text-center text-surface-500 text-sm"
                 >
                   No records found.
                 </td>
@@ -71,7 +71,7 @@ export function DataTable<T extends { id: string }>({
                         onRowClick(row);
                       }
                     }}
-                    className={`transition-colors ${
+                    className={`h-[56px] transition-colors ${
                       isClickable
                         ? 'cursor-pointer hover:bg-surface-50 focus:outline-none focus:bg-surface-50'
                         : ''
@@ -80,11 +80,11 @@ export function DataTable<T extends { id: string }>({
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-6 py-4 text-surface-900 ${
+                        className={`px-6 py-3.5 text-surface-900 ${
                           col.align === 'center'
                             ? 'text-center'
                             : col.align === 'right'
-                            ? 'text-right'
+                            ? 'text-right tabular'
                             : 'text-left'
                         }`}
                       >
@@ -101,3 +101,4 @@ export function DataTable<T extends { id: string }>({
     </div>
   );
 }
+
