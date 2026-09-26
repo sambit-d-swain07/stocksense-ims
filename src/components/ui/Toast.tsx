@@ -8,22 +8,22 @@ export interface ToastProps {
 
 export const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose }) => {
   const typeStyles = {
-    success: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    error: 'bg-red-50 text-red-800 border-red-200',
-    info: 'bg-blue-50 text-blue-800 border-blue-200',
+    success: 'bg-white text-leaf-text border-l-4 border-l-leaf border-surface-200',
+    error: 'bg-white text-coral-text border-l-4 border-l-coral border-surface-200',
+    info: 'bg-white text-brand-700 border-l-4 border-l-brand-600 border-surface-200',
   };
 
   return (
     <div
-      className={`flex items-center justify-between p-4 mb-4 border rounded-xl shadow-sm text-sm ${typeStyles[type]}`}
+      className={`flex items-center justify-between p-4 mb-4 border rounded-xl shadow-pop text-xs font-semibold ${typeStyles[type]}`}
       role="alert"
     >
       <span>{message}</span>
       {onClose && (
         <button
           onClick={onClose}
-          className="ml-4 font-bold hover:opacity-75 focus:outline-none"
-          aria-label="Close"
+          className="ml-4 text-surface-400 hover:text-surface-700 focus:outline-none"
+          aria-label="Close notification"
         >
           ×
         </button>

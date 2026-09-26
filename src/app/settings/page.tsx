@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAuth } from '@/context/AuthContext';
 import { Spinner } from '@/components/ui/Spinner';
+import { Button } from '@/components/ui/Button';
 
 export default function SettingsPage() {
   const { token } = useAuth();
@@ -187,49 +188,49 @@ export default function SettingsPage() {
     <AppShell>
       <div className="space-y-6">
         {/* Header */}
-        <div className="pb-2 border-b border-zinc-200/80">
-          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-ink tracking-tight">
             System Settings &amp; Configuration
           </h1>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-sm text-surface-500 mt-1">
             Configure Multi-Warehouse architecture, Stock Locations, and Product Categories
           </p>
         </div>
 
         {error && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs font-medium text-rose-800">
+          <div className="p-3 bg-coral-tint border border-coral/30 rounded-xl text-xs font-medium text-coral-text">
             {error}
           </div>
         )}
 
-        {/* Tab Switcher */}
-        <div className="flex border-b border-zinc-200 space-x-1">
+        {/* Tab Switcher - Underline Tabs in brand-600 */}
+        <div className="flex border-b border-surface-200 gap-8">
           <button
             onClick={() => setActiveTab('WAREHOUSES')}
-            className={`py-2 px-4 text-xs font-semibold rounded-t-lg transition-colors ${
+            className={`py-3 text-sm font-semibold border-b-2 transition-all ${
               activeTab === 'WAREHOUSES'
-                ? 'bg-zinc-900 text-white font-bold'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                ? 'border-brand-600 text-brand-600 font-bold'
+                : 'border-transparent text-surface-500 hover:text-ink'
             }`}
           >
             Warehouses ({warehouses.length})
           </button>
           <button
             onClick={() => setActiveTab('LOCATIONS')}
-            className={`py-2 px-4 text-xs font-semibold rounded-t-lg transition-colors ${
+            className={`py-3 text-sm font-semibold border-b-2 transition-all ${
               activeTab === 'LOCATIONS'
-                ? 'bg-zinc-900 text-white font-bold'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                ? 'border-brand-600 text-brand-600 font-bold'
+                : 'border-transparent text-surface-500 hover:text-ink'
             }`}
           >
             Locations ({locations.length})
           </button>
           <button
             onClick={() => setActiveTab('CATEGORIES')}
-            className={`py-2 px-4 text-xs font-semibold rounded-t-lg transition-colors ${
+            className={`py-3 text-sm font-semibold border-b-2 transition-all ${
               activeTab === 'CATEGORIES'
-                ? 'bg-zinc-900 text-white font-bold'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                ? 'border-brand-600 text-brand-600 font-bold'
+                : 'border-transparent text-surface-500 hover:text-ink'
             }`}
           >
             Categories ({categories.length})
@@ -237,7 +238,7 @@ export default function SettingsPage() {
         </div>
 
         {formError && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs font-medium text-rose-800">
+          <div className="p-3 bg-coral-tint border border-coral/30 rounded-xl text-xs font-medium text-coral-text">
             {formError}
           </div>
         )}
@@ -245,156 +246,27 @@ export default function SettingsPage() {
         {loading ? (
           <div className="py-20 text-center">
             <Spinner size="lg" />
-            <p className="mt-2 text-xs text-zinc-500">Loading settings data...</p>
+            <p className="mt-3 text-sm text-surface-500 font-medium">Loading settings data...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Form Column */}
-            <div className="bg-white border border-zinc-200 rounded-xl p-6 h-fit space-y-4">
-              {activeTab === 'WAREHOUSES' && (
-                <form onSubmit={handleCreateWarehouse} className="space-y-3.5 text-xs">
-                  <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-2">
-                    Add Warehouse
-                  </h2>
-                  <div>
-                    <label className="block text-zinc-700 font-semibold mb-1 uppercase">Warehouse Name *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Main Central Warehouse"
-                      value={whName}
-                      onChange={(e) => setWhName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-700 font-semibold mb-1 uppercase">Short Code *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. WH-MAIN"
-                      value={whShortCode}
-                      onChange={(e) => setWhShortCode(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 font-mono uppercase"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-700 font-semibold mb-1 uppercase">Address</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Industrial Area Phase 1, Jalandhar"
-                      value={whAddress}
-                      onChange={(e) => setWhAddress(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-2 bg-zinc-900 text-white rounded-lg text-xs font-semibold hover:bg-zinc-800 transition-colors mt-2"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Add Warehouse'}
-                  </button>
-                </form>
-              )}
-
-              {activeTab === 'LOCATIONS' && (
-                <form onSubmit={handleCreateLocation} className="space-y-3.5 text-xs">
-                  <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-2">
-                    Add Stock Location
-                  </h2>
-                  <div>
-                    <label className="block text-zinc-700 font-semibold mb-1 uppercase">Location Name *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Rack A1 / Shelf 2"
-                      value={locName}
-                      onChange={(e) => setLocName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-700 font-semibold mb-1 uppercase">Short Code *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. RACK-A1"
-                      value={locShortCode}
-                      onChange={(e) => setLocShortCode(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 font-mono uppercase"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-zinc-700 font-semibold mb-1 uppercase">Warehouse *</label>
-                    <select
-                      value={locWarehouseId}
-                      onChange={(e) => setLocWarehouseId(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900"
-                      required
-                    >
-                      <option value="">Select Parent Warehouse...</option>
-                      {warehouses.map((wh) => (
-                        <option key={wh.id} value={wh.id}>
-                          {wh.name} [{wh.shortCode}]
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-2 bg-zinc-900 text-white rounded-lg text-xs font-semibold hover:bg-zinc-800 transition-colors mt-2"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Add Location'}
-                  </button>
-                </form>
-              )}
-
-              {activeTab === 'CATEGORIES' && (
-                <form onSubmit={handleCreateCategory} className="space-y-3.5 text-xs">
-                  <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-2">
-                    Add Product Category
-                  </h2>
-                  <div>
-                    <label className="block text-zinc-700 font-semibold mb-1 uppercase">Category Name *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Electronics, Furniture, Raw Materials"
-                      value={catName}
-                      onChange={(e) => setCatName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900"
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-2 bg-zinc-900 text-white rounded-lg text-xs font-semibold hover:bg-zinc-800 transition-colors mt-2"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Add Category'}
-                  </button>
-                </form>
-              )}
-            </div>
-
-            {/* List Column */}
-            <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-xl p-6">
+            {/* List Column (2 cols) */}
+            <div className="lg:col-span-2 bg-white border border-surface-200 rounded-card p-6 shadow-card">
               {activeTab === 'WAREHOUSES' && (
                 <div className="space-y-4">
-                  <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-2">Configured Warehouses</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 pb-3">Configured Warehouses</h2>
                   {warehouses.length === 0 ? (
-                    <p className="text-zinc-500 text-xs py-8 text-center">No warehouses configured yet.</p>
+                    <p className="text-surface-400 text-sm py-12 text-center">No warehouses configured yet.</p>
                   ) : (
                     <div className="space-y-3">
                       {warehouses.map((wh) => (
-                        <div key={wh.id} className="p-4 bg-zinc-50/60 rounded-lg border border-zinc-200 flex justify-between items-center text-xs">
+                        <div key={wh.id} className="p-4 bg-surface-50/70 rounded-inner border border-surface-200/80 flex justify-between items-center text-sm">
                           <div>
-                            <span className="font-bold text-zinc-900 text-sm block">{wh.name}</span>
-                            <span className="text-zinc-500 font-mono">Code: {wh.shortCode}</span>
-                            {wh.address && <p className="text-zinc-500 text-[11px] mt-1">{wh.address}</p>}
+                            <span className="font-bold text-ink text-base block">{wh.name}</span>
+                            <span className="text-xs text-surface-500 font-mono">Code: {wh.shortCode}</span>
+                            {wh.address && <p className="text-xs text-surface-500 mt-1">{wh.address}</p>}
                           </div>
-                          <span className="px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded border border-zinc-200 font-mono font-bold">
+                          <span className="px-3 py-1 bg-surface-100 text-ink rounded-full border border-surface-200 font-mono font-bold text-xs">
                             {wh.shortCode}
                           </span>
                         </div>
@@ -406,18 +278,18 @@ export default function SettingsPage() {
 
               {activeTab === 'LOCATIONS' && (
                 <div className="space-y-4">
-                  <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-2">Configured Stock Locations</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 pb-3">Configured Stock Locations</h2>
                   {locations.length === 0 ? (
-                    <p className="text-zinc-500 text-xs py-8 text-center">No locations configured yet.</p>
+                    <p className="text-surface-400 text-sm py-12 text-center">No locations configured yet.</p>
                   ) : (
                     <div className="space-y-3">
                       {locations.map((loc) => (
-                        <div key={loc.id} className="p-4 bg-zinc-50/60 rounded-lg border border-zinc-200 flex justify-between items-center text-xs">
+                        <div key={loc.id} className="p-4 bg-surface-50/70 rounded-inner border border-surface-200/80 flex justify-between items-center text-sm">
                           <div>
-                            <span className="font-bold text-zinc-900 text-sm block">{loc.name}</span>
-                            <span className="text-zinc-500 text-[11px]">Parent WH: {loc.warehouseName}</span>
+                            <span className="font-bold text-ink text-base block">{loc.name}</span>
+                            <span className="text-xs text-surface-500">Parent WH: {loc.warehouseName}</span>
                           </div>
-                          <span className="px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded border border-zinc-200 font-mono font-bold">
+                          <span className="px-3 py-1 bg-surface-100 text-ink rounded-full border border-surface-200 font-mono font-bold text-xs">
                             {loc.shortCode}
                           </span>
                         </div>
@@ -429,20 +301,155 @@ export default function SettingsPage() {
 
               {activeTab === 'CATEGORIES' && (
                 <div className="space-y-4">
-                  <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-2">Configured Product Categories</h2>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 pb-3">Configured Product Categories</h2>
                   {categories.length === 0 ? (
-                    <p className="text-zinc-500 text-xs py-8 text-center">No categories configured yet.</p>
+                    <p className="text-surface-400 text-sm py-12 text-center">No categories configured yet.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {categories.map((cat) => (
-                        <div key={cat.id} className="p-3 bg-zinc-50/60 rounded-lg border border-zinc-200 flex justify-between items-center text-xs">
-                          <span className="font-bold text-zinc-900">{cat.name}</span>
-                          <span className="text-[10px] text-zinc-400 font-mono">ID: {cat.id.substring(0, 8)}...</span>
+                        <div key={cat.id} className="p-3.5 bg-surface-50/70 rounded-inner border border-surface-200/80 flex justify-between items-center text-sm">
+                          <span className="font-bold text-ink">{cat.name}</span>
+                          <span className="text-xs text-surface-400 font-mono">ID: {cat.id.substring(0, 8)}...</span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+
+            {/* Form Column (Right) */}
+            <div className="bg-white border border-surface-200 rounded-card p-6 h-fit space-y-4 shadow-card">
+              {activeTab === 'WAREHOUSES' && (
+                <form onSubmit={handleCreateWarehouse} className="space-y-4 text-xs">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 pb-3">
+                    Add Warehouse
+                  </h2>
+                  <div>
+                    <label className="block text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-1.5">Warehouse Name *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Main Central Warehouse"
+                      value={whName}
+                      onChange={(e) => setWhName(e.target.value)}
+                      className="w-full px-3.5 h-11 text-sm bg-white border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600 text-ink"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-1.5">Short Code *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. WH-MAIN"
+                      value={whShortCode}
+                      onChange={(e) => setWhShortCode(e.target.value)}
+                      className="w-full px-3.5 h-11 text-sm bg-white border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600 text-ink font-mono uppercase"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-1.5">Address</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Industrial Area Phase 1, Jalandhar"
+                      value={whAddress}
+                      onChange={(e) => setWhAddress(e.target.value)}
+                      className="w-full px-3.5 h-11 text-sm bg-white border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600 text-ink"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSubmitting}
+                    className="w-full rounded-full mt-2"
+                  >
+                    Add Warehouse
+                  </Button>
+                </form>
+              )}
+
+              {activeTab === 'LOCATIONS' && (
+                <form onSubmit={handleCreateLocation} className="space-y-4 text-xs">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 pb-3">
+                    Add Stock Location
+                  </h2>
+                  <div>
+                    <label className="block text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-1.5">Location Name *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Rack A1 / Shelf 2"
+                      value={locName}
+                      onChange={(e) => setLocName(e.target.value)}
+                      className="w-full px-3.5 h-11 text-sm bg-white border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600 text-ink"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-1.5">Short Code *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. RACK-A1"
+                      value={locShortCode}
+                      onChange={(e) => setLocShortCode(e.target.value)}
+                      className="w-full px-3.5 h-11 text-sm bg-white border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600 text-ink font-mono uppercase"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-1.5">Warehouse *</label>
+                    <select
+                      value={locWarehouseId}
+                      onChange={(e) => setLocWarehouseId(e.target.value)}
+                      className="w-full px-3.5 h-11 text-sm bg-white border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600 text-ink font-medium"
+                      required
+                    >
+                      <option value="">Select Parent Warehouse...</option>
+                      {warehouses.map((wh) => (
+                        <option key={wh.id} value={wh.id}>
+                          {wh.name} [{wh.shortCode}]
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSubmitting}
+                    className="w-full rounded-full mt-2"
+                  >
+                    Add Location
+                  </Button>
+                </form>
+              )}
+
+              {activeTab === 'CATEGORIES' && (
+                <form onSubmit={handleCreateCategory} className="space-y-4 text-xs">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 pb-3">
+                    Add Product Category
+                  </h2>
+                  <div>
+                    <label className="block text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-1.5">Category Name *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Electronics, Furniture, Raw Materials"
+                      value={catName}
+                      onChange={(e) => setCatName(e.target.value)}
+                      className="w-full px-3.5 h-11 text-sm bg-white border border-surface-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-600/20 focus:border-brand-600 text-ink"
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSubmitting}
+                    className="w-full rounded-full mt-2"
+                  >
+                    Add Category
+                  </Button>
+                </form>
               )}
             </div>
           </div>
@@ -451,3 +458,4 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+
