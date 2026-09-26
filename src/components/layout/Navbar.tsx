@@ -20,6 +20,8 @@ export const Navbar: React.FC = () => {
     { href: '/', label: 'Home' },
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/operations/receipts', label: 'Receipts' },
+    { href: '/stock', label: 'Stock' },
+    { href: '/settings/warehouses', label: 'Settings' },
   ];
 
   return (
@@ -40,7 +42,7 @@ export const Navbar: React.FC = () => {
             {/* Nav Links */}
             <div className="hidden md:flex space-x-4">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href;
+                const isActive = pathname === link.href || (link.href.startsWith('/settings') && pathname.startsWith('/settings'));
                 return (
                   <Link
                     key={link.href}

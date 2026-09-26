@@ -29,3 +29,29 @@ export interface DashboardKpis {
   receipts: OperationKpi;
   deliveries: OperationKpi;
 }
+
+export interface StockItem {
+  id: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  unit: string;
+  costPerUnit: number;
+  onHand: number;
+  reserved: number;
+}
+
+export interface Warehouse {
+  id: string;
+  name: string;
+  shortCode: string;
+  address?: string | null;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  shortCode: string;
+  warehouseId: string;
+  warehouseName?: string;
+}
