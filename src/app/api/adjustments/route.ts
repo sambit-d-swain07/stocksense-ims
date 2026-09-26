@@ -20,32 +20,34 @@ export async function GET(req: Request) {
   if (errorResponse) return errorResponse;
 
   try {
-    const adjustments = await prisma.adjustment.findMany({
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            sku: true,
-            unit: true,
+    const adjustments = await withRetry(() =>
+      prisma.adjustment.findMany({
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              unit: true,
+            },
           },
-        },
-        location: {
-          select: {
-            id: true,
-            name: true,
-            shortCode: true,
-            warehouse: {
-              select: {
-                id: true,
-                name: true,
+          location: {
+            select: {
+              id: true,
+              name: true,
+              shortCode: true,
+              warehouse: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      })
+    );
 
     const data = adjustments.map((adj) => ({
       ...adj,
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
   const { reference: inputRef, productId, locationId, countedQty, reason } = result.data;
 
   try {
-    const product = await prisma.product.findUnique({ where: { id: productId } });
+    const product = await withRetry(() => prisma.product.findUnique({ where: { id: productId } }));
     if (!product) {
       return NextResponse.json(
         { error: { message: `Product ${productId} does not exist` } },
@@ -83,7 +85,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const location = await prisma.location.findUnique({ where: { id: locationId } });
+    const location = await withRetry(() => prisma.location.findUnique({ where: { id: locationId } }));
     if (!location) {
       return NextResponse.json(
         { error: { message: `Location ${locationId} does not exist` } },
@@ -91,11 +93,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const stock = await prisma.stock.findUnique({
-      where: {
-        productId_locationId: { productId, locationId },
-      },
-    });
+    const stock = await withRetry(() =>
+      prisma.stock.findUnique({
+        where: {
+          productId_locationId: { productId, locationId },
+        },
+      })
+    );
 
     const systemQty = stock ? stock.onHand : 0;
     const difference = countedQty - systemQty;

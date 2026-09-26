@@ -25,36 +25,38 @@ export async function GET(req: Request) {
   if (errorResponse) return errorResponse;
 
   try {
-    const receipts = await prisma.receipt.findMany({
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-                unit: true,
+    const receipts = await withRetry(() =>
+      prisma.receipt.findMany({
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  sku: true,
+                  unit: true,
+                },
               },
-            },
-            location: {
-              select: {
-                id: true,
-                name: true,
-                shortCode: true,
-                warehouse: {
-                  select: {
-                    id: true,
-                    name: true,
+              location: {
+                select: {
+                  id: true,
+                  name: true,
+                  shortCode: true,
+                  warehouse: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      })
+    );
 
     const data = receipts.map((receipt) => ({
       ...receipt,
@@ -87,16 +89,15 @@ export async function POST(req: Request) {
   const items = result.data.items || [];
 
   try {
-    // Validate products & locations existence
     for (const item of items) {
-      const productExists = await prisma.product.findUnique({ where: { id: item.productId } });
+      const productExists = await withRetry(() => prisma.product.findUnique({ where: { id: item.productId } }));
       if (!productExists) {
         return NextResponse.json(
           { error: { message: `Product ${item.productId} does not exist` } },
           { status: 400 }
         );
       }
-      const locationExists = await prisma.location.findUnique({ where: { id: item.locationId } });
+      const locationExists = await withRetry(() => prisma.location.findUnique({ where: { id: item.locationId } }));
       if (!locationExists) {
         return NextResponse.json(
           { error: { message: `Location ${item.locationId} does not exist` } },
@@ -108,28 +109,30 @@ export async function POST(req: Request) {
     const reference = await generateReceiptRef(inputRef);
 
     if (status === 'DONE') {
-      const newReceipt = await prisma.receipt.create({
-        data: {
-          reference,
-          supplierName: supplierName || null,
-          status: 'DONE',
-          items: {
-            create: items.map((i) => ({
-              productId: i.productId,
-              locationId: i.locationId,
-              quantity: i.quantity,
-            })),
-          },
-        },
-        include: {
-          items: {
-            include: {
-              product: { select: { id: true, name: true, sku: true } },
-              location: { select: { id: true, name: true, shortCode: true } },
+      const newReceipt = await withRetry(() =>
+        prisma.receipt.create({
+          data: {
+            reference,
+            supplierName: supplierName || null,
+            status: 'DONE',
+            items: {
+              create: items.map((i) => ({
+                productId: i.productId,
+                locationId: i.locationId,
+                quantity: i.quantity,
+              })),
             },
           },
-        },
-      });
+          include: {
+            items: {
+              include: {
+                product: { select: { id: true, name: true, sku: true } },
+                location: { select: { id: true, name: true, shortCode: true } },
+              },
+            },
+          },
+        })
+      );
 
       const stockOps: any[] = [];
       for (const item of items) {
@@ -162,29 +165,30 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ data: newReceipt }, { status: 201 });
     } else {
-      // DRAFT or READY: Create receipt without updating stock
-      const receipt = await prisma.receipt.create({
-        data: {
-          reference,
-          supplierName: supplierName || null,
-          status,
-          items: {
-            create: items.map((i) => ({
-              productId: i.productId,
-              locationId: i.locationId,
-              quantity: i.quantity,
-            })),
-          },
-        },
-        include: {
-          items: {
-            include: {
-              product: { select: { id: true, name: true, sku: true } },
-              location: { select: { id: true, name: true, shortCode: true } },
+      const receipt = await withRetry(() =>
+        prisma.receipt.create({
+          data: {
+            reference,
+            supplierName: supplierName || null,
+            status,
+            items: {
+              create: items.map((i) => ({
+                productId: i.productId,
+                locationId: i.locationId,
+                quantity: i.quantity,
+              })),
             },
           },
-        },
-      });
+          include: {
+            items: {
+              include: {
+                product: { select: { id: true, name: true, sku: true } },
+                location: { select: { id: true, name: true, shortCode: true } },
+              },
+            },
+          },
+        })
+      );
 
       return NextResponse.json({ data: receipt }, { status: 201 });
     }

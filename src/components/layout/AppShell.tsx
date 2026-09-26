@@ -43,9 +43,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, pageTitle, actionB
   };
 
   const isOpsActive =
-    pathname.startsWith('/receipts') ||
     pathname.startsWith('/operations/receipts') ||
-    pathname.startsWith('/deliveries') ||
     pathname.startsWith('/operations/deliveries') ||
     pathname.startsWith('/adjustments');
 
@@ -163,7 +161,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, pageTitle, actionB
                   href="/operations/receipts"
                   onClick={() => setMobileOpen(false)}
                   className={`h-9 rounded-lg px-2.5 flex items-center gap-2.5 text-xs transition-all ${
-                    pathname.startsWith('/receipts') || pathname.startsWith('/operations/receipts')
+                    pathname.startsWith('/operations/receipts')
                       ? 'bg-white/15 text-white font-semibold'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
@@ -176,7 +174,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children, pageTitle, actionB
                   href="/operations/deliveries"
                   onClick={() => setMobileOpen(false)}
                   className={`h-9 rounded-lg px-2.5 flex items-center gap-2.5 text-xs transition-all ${
-                    pathname.startsWith('/deliveries') || pathname.startsWith('/operations/deliveries')
+                    pathname.startsWith('/operations/deliveries')
                       ? 'bg-white/15 text-white font-semibold'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
