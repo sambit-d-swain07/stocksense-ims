@@ -153,6 +153,17 @@ export default function LoginPage() {
             Sign Up
           </Link>
         </div>
+
+        {/* Demo credentials hint */}
+        <div className="mt-5 p-3 rounded-2xl bg-[#F4F4F4] border border-[#E2E2E2] text-center">
+          <p className="text-[11.5px] text-[#6E6E6E] leading-relaxed">
+            <span className="font-semibold text-[#141414]">Demo account</span>
+            {' — '}Login ID:{' '}
+            <code className="font-mono text-[#141414] bg-[#E6E6E6] px-1.5 py-0.5 rounded-md">demo01</code>
+            {'  ·  '}Password:{' '}
+            <code className="font-mono text-[#141414] bg-[#E6E6E6] px-1.5 py-0.5 rounded-md">Demo@123</code>
+          </p>
+        </div>
       </div>
     </AuthLayout>
   );
