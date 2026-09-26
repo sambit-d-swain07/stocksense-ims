@@ -3,11 +3,64 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-rgb: 248, 250, 252;
+  --canvas-bg: #E6E6E6;
+  --text-primary: #141414;
+  --text-secondary: #6E6E6E;
+  --text-muted: #A9A9A9;
+  --border-subtle: #E2E2E2;
+  --soft-fill: #F4F4F4;
+  --dark-highlight: #1C1C1C;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  color: var(--text-primary);
+  background-color: var(--canvas-bg);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background blurred ambient circles */
+.canvas-ambient-circle-1 {
+  position: fixed;
+  top: -100px;
+  left: -100px;
+  width: 650px;
+  height: 650px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.75);
+  filter: blur(140px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.canvas-ambient-circle-2 {
+  position: fixed;
+  bottom: -120px;
+  right: -120px;
+  width: 750px;
+  height: 750px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.65);
+  filter: blur(160px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D1D1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A9A9A9;
 }
