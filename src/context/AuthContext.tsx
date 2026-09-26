@@ -1,7 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
+// ─────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────
 export interface User {
   id: string;
   loginId: string;
@@ -18,6 +21,10 @@ export interface RegisterInput {
   name?: string;
 }
 
+interface StoredUser extends User {
+  _password: string; // hashed/stored only in mock localStorage
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -32,259 +39,223 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// ─────────────────────────────────────────────
+// Storage keys
+// ─────────────────────────────────────────────
+const SESSION_KEY = 'stocksense:session'; // { token, user }
+const USERS_KEY = 'stocksense:users';     // StoredUser[]
 
-const TOKEN_KEY = 'odoo_hack_auth_token';
-const USER_KEY = 'odoo_hack_auth_user';
+// ─────────────────────────────────────────────
+// Demo seed user
+// ─────────────────────────────────────────────
+const DEMO_USER: StoredUser = {
+  id: 'usr_demo01',
+  loginId: 'demo01',
+  name: 'Demo User',
+  email: 'demo@stocksense.dev',
+  createdAt: '2024-01-01T00:00:00.000Z',
+  role: 'MANAGER',
+  _password: 'Demo@123',
+};
+
+// ─────────────────────────────────────────────
+// Helpers (safe – never throw)
+// ─────────────────────────────────────────────
+function seedDemoUser(): void {
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    const users: StoredUser[] = raw ? JSON.parse(raw) : [];
+    const exists = users.some((u) => u.loginId === DEMO_USER.loginId);
+    if (!exists) {
+      users.push(DEMO_USER);
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function getUsers(): StoredUser[] {
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveUsers(users: StoredUser[]): void {
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  } catch {
+    // ignore
+  }
+}
+
+function getSession(): { token: string; user: User } | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.token && parsed?.user?.loginId) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function saveSession(token: string, user: User): void {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ token, user }));
+  } catch {
+    // ignore
+  }
+}
+
+function clearSession(): void {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function makeMockToken(): string {
+  return `mock_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+// ─────────────────────────────────────────────
+// Context
+// ─────────────────────────────────────────────
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const isMounted = useRef<boolean>(false);
 
-  // Initialize session from localStorage safely with strict timeout
+  // ── Init: runs ONCE synchronously after first render (no network calls) ──
   useEffect(() => {
-    isMounted.current = true;
-    let didTimeout = false;
-
-    // Guaranteed fallback: stop loading after 3 seconds no matter what
-    const safetyTimer = setTimeout(() => {
-      didTimeout = true;
-      if (isMounted.current) {
-        setIsLoading(false);
+    try {
+      seedDemoUser();
+      const session = getSession();
+      if (session) {
+        setUser(session.user);
+        setToken(session.token);
       }
-    }, 3000);
-
-    const initAuth = async () => {
-      try {
-        const savedToken = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
-        const savedUserStr = typeof window !== 'undefined' ? localStorage.getItem(USER_KEY) : null;
-
-        if (!savedToken) {
-          if (isMounted.current && !didTimeout) {
-            setUser(null);
-            setToken(null);
-            setIsLoading(false);
-          }
-          return;
-        }
-
-        // Try reading cached user session directly from localStorage (mock/offline mode)
-        if (savedUserStr) {
-          try {
-            const parsedUser = JSON.parse(savedUserStr);
-            if (parsedUser && parsedUser.loginId) {
-              if (isMounted.current && !didTimeout) {
-                setUser(parsedUser);
-                setToken(savedToken);
-                setIsLoading(false);
-              }
-              return;
-            }
-          } catch (e) {
-            // Invalid JSON in localStorage
-          }
-        }
-
-        // If no user object in localStorage or token is real JWT, attempt fetch with 2s abort timeout
-        const controller = new AbortController();
-        const fetchTimeout = setTimeout(() => controller.abort(), 2000);
-
-        try {
-          const res = await fetch('/api/auth/me', {
-            headers: { Authorization: `Bearer ${savedToken}` },
-            signal: controller.signal,
-          });
-          clearTimeout(fetchTimeout);
-
-          if (res.ok) {
-            const json = await res.json();
-            if (json?.data?.user && isMounted.current && !didTimeout) {
-              setUser(json.data.user);
-              setToken(savedToken);
-              localStorage.setItem(USER_KEY, JSON.stringify(json.data.user));
-              return;
-            }
-          }
-        } catch (fetchErr) {
-          // Backend offline or timed out
-        }
-
-        // If backend verification failed, check if it's a mock token session
-        if (savedToken.startsWith('mock_') || savedUserStr) {
-          if (savedUserStr) {
-            const fallbackUser = JSON.parse(savedUserStr);
-            if (isMounted.current && !didTimeout) {
-              setUser(fallbackUser);
-              setToken(savedToken);
-              return;
-            }
-          }
-        }
-
-        // Otherwise treat user as logged out
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(USER_KEY);
-        }
-        if (isMounted.current && !didTimeout) {
-          setUser(null);
-          setToken(null);
-        }
-      } catch (err) {
-        console.error('Session initialization error:', err);
-        if (isMounted.current && !didTimeout) {
-          setUser(null);
-          setToken(null);
-        }
-      } finally {
-        clearTimeout(safetyTimer);
-        if (isMounted.current && !didTimeout) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initAuth();
-
-    return () => {
-      isMounted.current = false;
-      clearTimeout(safetyTimer);
-    };
+    } catch {
+      // failsafe: ignore any error
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const login = async (loginId: string, password: string) => {
-    try {
-      // First attempt backend login if running, with a 2.5s timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
-
+  // ── Login ──
+  const login = useCallback(
+    async (
+      loginId: string,
+      password: string
+    ): Promise<{ success: boolean; error?: string; fields?: Record<string, string> }> => {
       try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ loginId, password }),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+        const users = getUsers();
+        const found = users.find((u) => u.loginId === loginId.trim());
 
-        const json = await res.json().catch(() => null);
-
-        if (res.ok && json?.data?.token && json?.data?.user) {
-          const { token: newToken, user: userData } = json.data;
-          localStorage.setItem(TOKEN_KEY, newToken);
-          localStorage.setItem(USER_KEY, JSON.stringify(userData));
-          setToken(newToken);
-          setUser(userData);
-          return { success: true };
-        }
-
-        if (json?.error && (res.status === 400 || res.status === 401)) {
+        if (!found) {
           return {
             success: false,
-            error: json.error?.message || 'Invalid credentials',
-            fields: json.error?.fields,
+            error: 'No account found with that Login ID.',
+            fields: { loginId: 'No account found with that Login ID.' },
           };
         }
-      } catch (e) {
-        // Backend not reachable, proceed to mock session mode
-      }
 
-      // Standalone Mock Mode: Accept any valid input, save session to localStorage
-      const mockToken = `mock_token_${Date.now()}`;
-      const mockUser: User = {
-        id: `usr_${Date.now()}`,
-        loginId: loginId.trim(),
-        name: loginId.trim(),
-        email: `${loginId.trim().toLowerCase()}@stocksense.local`,
-        createdAt: new Date().toISOString(),
-        role: 'MANAGER',
-      };
-
-      localStorage.setItem(TOKEN_KEY, mockToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
-      setToken(mockToken);
-      setUser(mockUser);
-      return { success: true };
-    } catch (err: any) {
-      return {
-        success: false,
-        error: err?.message || 'Failed to sign in. Please try again.',
-      };
-    }
-  };
-
-  const register = async (data: RegisterInput) => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-      try {
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        const json = await res.json().catch(() => null);
-
-        if (res.ok && json?.data?.token && json?.data?.user) {
-          const { token: newToken, user: userData } = json.data;
-          localStorage.setItem(TOKEN_KEY, newToken);
-          localStorage.setItem(USER_KEY, JSON.stringify(userData));
-          setToken(newToken);
-          setUser(userData);
-          return { success: true };
-        }
-
-        if (json?.error && (res.status === 400 || res.status === 409 || res.status === 422)) {
+        if (found._password !== password) {
           return {
             success: false,
-            error: json.error?.message || 'Registration failed',
-            fields: json.error?.fields,
+            error: 'Incorrect password.',
+            fields: { password: 'Incorrect password.' },
           };
         }
-      } catch (e) {
-        // Backend offline, proceed to mock session
+
+        // Strip internal _password before storing in session
+        const { _password: _p, ...safeUser } = found;
+        const newToken = makeMockToken();
+
+        saveSession(newToken, safeUser);
+        setToken(newToken);
+        setUser(safeUser);
+        return { success: true };
+      } catch (err: any) {
+        return {
+          success: false,
+          error: err?.message || 'Failed to sign in. Please try again.',
+        };
       }
+    },
+    []
+  );
 
-      // Standalone Mock Mode: Save new user session
-      const mockToken = `mock_token_${Date.now()}`;
-      const mockUser: User = {
-        id: `usr_${Date.now()}`,
-        loginId: data.loginId.trim(),
-        name: data.name || data.loginId.trim(),
-        email: data.email.trim(),
-        createdAt: new Date().toISOString(),
-        role: 'STAFF',
-      };
+  // ── Register ──
+  const register = useCallback(
+    async (
+      data: RegisterInput
+    ): Promise<{ success: boolean; error?: string; fields?: Record<string, string> }> => {
+      try {
+        const users = getUsers();
+        const loginIdTaken = users.some((u) => u.loginId === data.loginId.trim());
+        if (loginIdTaken) {
+          return {
+            success: false,
+            error: 'This Login ID is already taken.',
+            fields: { loginId: 'This Login ID is already taken.' },
+          };
+        }
 
-      localStorage.setItem(TOKEN_KEY, mockToken);
-      localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
-      setToken(mockToken);
-      setUser(mockUser);
-      return { success: true };
-    } catch (err: any) {
-      return {
-        success: false,
-        error: err?.message || 'Failed to create account. Please try again.',
-      };
-    }
-  };
+        const emailTaken = users.some(
+          (u) => u.email.toLowerCase() === data.email.trim().toLowerCase()
+        );
+        if (emailTaken) {
+          return {
+            success: false,
+            error: 'An account with this email already exists.',
+            fields: { email: 'An account with this email already exists.' },
+          };
+        }
 
-  const logout = () => {
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-    } catch (e) {
-      // ignore
-    }
+        const newUser: StoredUser = {
+          id: `usr_${Date.now()}`,
+          loginId: data.loginId.trim(),
+          name: data.name?.trim() || data.loginId.trim(),
+          email: data.email.trim().toLowerCase(),
+          createdAt: new Date().toISOString(),
+          role: 'STAFF',
+          _password: data.password,
+        };
+
+        saveUsers([...users, newUser]);
+
+        const { _password: _p, ...safeUser } = newUser;
+        const newToken = makeMockToken();
+
+        saveSession(newToken, safeUser);
+        setToken(newToken);
+        setUser(safeUser);
+        return { success: true };
+      } catch (err: any) {
+        return {
+          success: false,
+          error: err?.message || 'Failed to create account. Please try again.',
+        };
+      }
+    },
+    []
+  );
+
+  // ── Logout ──
+  const logout = useCallback(() => {
+    clearSession();
     setToken(null);
     setUser(null);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>
