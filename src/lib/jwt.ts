@@ -5,6 +5,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only-chang
 export interface TokenPayload {
   userId: string;
   email: string;
+  loginId?: string;
+  role?: string;
 }
 
 export function signToken(payload: TokenPayload, expiresIn: string = '7d'): string {

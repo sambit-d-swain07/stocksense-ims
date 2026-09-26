@@ -7,11 +7,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  MANAGER
+  STAFF
+}
+
 model User {
   id        String   @id @default(cuid())
+  loginId   String   @unique
   email     String   @unique
   password  String
   name      String?
+  role      Role     @default(STAFF)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Warehouse {
+  id        String     @id @default(cuid())
+  name      String
+  shortCode String     @unique
+  address   String?
+  locations Location[]
+}
+
+model Location {
+  id          String    @id @default(cuid())
+  name        String
+  shortCode   String
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  stocks      Stock[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  sku          String   @unique
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
+  unit         String
+  costPerUnit  Float    @default(0)
+  reorderPoint Int      @default(0)
+  stocks       Stock[]
+}
+
+model Stock {
+  id         String   @id @default(cuid())
+  productId  String
+  locationId String
+  onHand     Int      @default(0)
+  reserved   Int      @default(0)
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
+
+  @@unique([productId, locationId])
 }
