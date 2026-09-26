@@ -28,8 +28,10 @@ export async function GET(req: Request) {
       where: { id: payload.userId },
       select: {
         id: true,
+        loginId: true,
         name: true,
         email: true,
+        role: true,
         createdAt: true,
       },
     });
