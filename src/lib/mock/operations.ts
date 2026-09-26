@@ -1,4 +1,4 @@
-import { Receipt } from '@/types/operations';
+import { Receipt, DashboardKpis } from '@/types/operations';
 
 function daysFromNow(n: number): string {
   const d = new Date();
@@ -89,3 +89,8 @@ export const mockReceipts: Receipt[] = [
     ],
   },
 ];
+
+export const mockDashboardKpis: DashboardKpis = {
+  receipts: { toProcess: 4, late: 1, total: 6 },
+  deliveries: { toProcess: 2, late: 1, waiting: 2, total: 6 },
+};

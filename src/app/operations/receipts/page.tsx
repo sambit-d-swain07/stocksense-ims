@@ -6,14 +6,12 @@ import { AppShell } from '@/components/layout/AppShell';
 import { getReceipts } from '@/lib/operations-api';
 import { useAsyncData } from '@/hooks/useAsyncData';
 import { Receipt } from '@/types/operations';
-import { formatDate, isOverdue, searchMatcher } from '@/lib/operations-utils';
+import { formatDate, isOverdue, matchesSearch } from '@/lib/operations-utils';
 import { OperationsToolbar } from '@/components/operations/OperationsToolbar';
 import { DataTable, Column } from '@/components/operations/DataTable';
-import { KanbanBoard } from '@/components/operations/KanbanBoard';
+import { KanbanBoard, KanbanColumn } from '@/components/operations/KanbanBoard';
 import { StatusBadge } from '@/components/operations/StatusBadge';
-import { LoadingState } from '@/components/operations/LoadingState';
-import { EmptyState } from '@/components/operations/EmptyState';
-import { ErrorState } from '@/components/operations/ErrorState';
+import { LoadingState, EmptyState, ErrorState } from '@/components/operations/States';
 
 export default function ReceiptsListPage() {
   const router = useRouter();
@@ -24,7 +22,7 @@ export default function ReceiptsListPage() {
   const filteredReceipts = useMemo(() => {
     if (!receipts) return [];
     return receipts.filter((r) =>
-      searchMatcher(r, searchQuery, ['reference', 'contact', 'from', 'to'])
+      matchesSearch(searchQuery, r.reference, r.contact, r.from, r.to)
     );
   }, [receipts, searchQuery]);
 
@@ -32,17 +30,17 @@ export default function ReceiptsListPage() {
     {
       key: 'reference',
       header: 'Reference',
-      render: (r) => <span className="font-semibold text-brand-600">{r.reference}</span>,
+      render: (r) => <span className="font-semibold text-surface-900">{r.reference}</span>,
     },
     {
       key: 'from',
       header: 'From',
-      render: (r) => <span>{r.from || '—'}</span>,
+      render: (r) => <span className="text-slate-600">{r.from || '—'}</span>,
     },
     {
       key: 'to',
       header: 'To',
-      render: (r) => <span>{r.to || '—'}</span>,
+      render: (r) => <span className="text-slate-600">{r.to || '—'}</span>,
     },
     {
       key: 'contact',
@@ -68,20 +66,20 @@ export default function ReceiptsListPage() {
     },
   ];
 
-  const kanbanColumns = [
-    { id: 'draft', title: 'Draft' },
-    { id: 'ready', title: 'Ready' },
-    { id: 'done', title: 'Done' },
-    { id: 'canceled', title: 'Canceled' },
+  const kanbanColumns: KanbanColumn[] = [
+    { key: 'draft', label: 'Draft', dotColor: 'bg-slate-400' },
+    { key: 'ready', label: 'Ready', dotColor: 'bg-brand-500' },
+    { key: 'done', label: 'Done', dotColor: 'bg-emerald-500' },
+    { key: 'canceled', label: 'Canceled', dotColor: 'bg-slate-400' },
   ];
 
   return (
     <AppShell>
       <OperationsToolbar
         title="Receipts"
-        description="Manage incoming inventory transfers, vendor stock receipts, and verification."
+        description="Incoming goods from vendors into the warehouse."
         newHref="/operations/receipts/new"
-        newButtonText="New Receipt"
+        newButtonText="New"
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         view={view}
@@ -90,31 +88,24 @@ export default function ReceiptsListPage() {
       />
 
       {isLoading ? (
-        <LoadingState message="Loading receipts data..." />
+        <LoadingState message="Loading receipts..." />
       ) : error ? (
         <ErrorState message={error} onRetry={reload} />
       ) : filteredReceipts.length === 0 ? (
         <EmptyState
-          title={searchQuery ? 'No matching receipts' : 'No receipts created yet'}
+          title={searchQuery ? 'No receipts match your search' : 'No receipts found'}
           description={
             searchQuery
               ? `No receipts found matching "${searchQuery}".`
-              : 'Create your first receipt to start tracking incoming inventory.'
+              : 'There are no receipts in the system.'
           }
-          actionText={searchQuery ? 'Clear Search' : 'New Receipt'}
-          onAction={() => {
-            if (searchQuery) {
-              setSearchQuery('');
-            } else {
-              router.push('/operations/receipts/new');
-            }
-          }}
+          actionText={searchQuery ? 'Clear search' : undefined}
+          onAction={searchQuery ? () => setSearchQuery('') : undefined}
         />
       ) : view === 'list' ? (
         <DataTable
           columns={columns}
           data={filteredReceipts}
-          keyExtractor={(r) => r.id}
           onRowClick={(r) => router.push(`/operations/receipts/${r.id}`)}
         />
       ) : (
@@ -122,25 +113,27 @@ export default function ReceiptsListPage() {
           columns={kanbanColumns}
           items={filteredReceipts}
           groupOf={(r) => r.status}
-          keyExtractor={(r) => r.id}
           onCardClick={(r) => router.push(`/operations/receipts/${r.id}`)}
-          renderCard={(r) => (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm text-brand-600">{r.reference}</span>
-                <StatusBadge status={r.status} />
+          renderCard={(r) => {
+            const productCount = r.lines.reduce((acc, l) => acc + l.quantity, 0);
+            return (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm text-surface-900">{r.reference}</span>
+                  <StatusBadge status={r.status} />
+                </div>
+                <div className="text-xs text-slate-600">
+                  <span className="font-medium text-slate-700">Contact:</span> {r.contact || '—'}
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-surface-100">
+                  <span className={isOverdue(r.scheduleDate, r.status) ? 'text-amber-700 font-medium' : ''}>
+                    {formatDate(r.scheduleDate)}
+                  </span>
+                  <span>{productCount} {productCount === 1 ? 'unit' : 'units'}</span>
+                </div>
               </div>
-              <div className="text-xs text-slate-600">
-                <span className="font-medium text-slate-800">From:</span> {r.from || '—'}
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-surface-100">
-                <span>{r.contact}</span>
-                <span className={isOverdue(r.scheduleDate, r.status) ? 'text-amber-700 font-medium' : ''}>
-                  {formatDate(r.scheduleDate)}
-                </span>
-              </div>
-            </div>
-          )}
+            );
+          }}
         />
       )}
     </AppShell>
