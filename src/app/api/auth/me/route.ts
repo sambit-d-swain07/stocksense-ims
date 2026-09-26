@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma, withRetry } from '@/lib/prisma';
 import { verifyToken } from '@/lib/jwt';
 
 export const dynamic = 'force-dynamic';
@@ -24,17 +24,19 @@ export async function GET(req: Request) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: {
-        id: true,
-        loginId: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const user = await withRetry(() =>
+      prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: {
+          id: true,
+          loginId: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+        },
+      })
+    );
 
     if (!user) {
       return NextResponse.json(

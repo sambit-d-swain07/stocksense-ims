@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import { prisma, withRetry } from '@/lib/prisma';
 import { signToken } from '@/lib/jwt';
 import { validateBody } from '@/lib/validate';
 
@@ -26,14 +26,16 @@ export async function POST(req: Request) {
   const identifier = loginId || email || '';
 
   try {
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { loginId: identifier },
-          { email: identifier.toLowerCase() },
-        ],
-      },
-    });
+    const user = await withRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          OR: [
+            { loginId: identifier },
+            { email: identifier.toLowerCase() },
+          ],
+        },
+      })
+    );
 
     if (!user) {
       return NextResponse.json(

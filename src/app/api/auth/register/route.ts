@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import { prisma, withRetry } from '@/lib/prisma';
 import { signToken } from '@/lib/jwt';
 import { validateBody } from '@/lib/validate';
 
@@ -30,9 +30,11 @@ export async function POST(req: Request) {
   const { name, loginId, email, password, role } = result.data;
 
   try {
-    const existingLoginId = await prisma.user.findUnique({
-      where: { loginId },
-    });
+    const existingLoginId = await withRetry(() =>
+      prisma.user.findUnique({
+        where: { loginId },
+      })
+    );
 
     if (existingLoginId) {
       return NextResponse.json(
@@ -46,9 +48,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const existingEmail = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
+    const existingEmail = await withRetry(() =>
+      prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+      })
+    );
 
     if (existingEmail) {
       return NextResponse.json(
@@ -64,23 +68,25 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        loginId,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        name: name || null,
-        role: role || 'STAFF',
-      },
-      select: {
-        id: true,
-        loginId: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const user = await withRetry(() =>
+      prisma.user.create({
+        data: {
+          loginId,
+          email: email.toLowerCase(),
+          password: hashedPassword,
+          name: name ? name.trim() : null,
+          role: role || 'STAFF',
+        },
+        select: {
+          id: true,
+          loginId: true,
+          email: true,
+          name: true,
+          role: true,
+          createdAt: true,
+        },
+      })
+    );
 
     const token = signToken({
       userId: user.id,
