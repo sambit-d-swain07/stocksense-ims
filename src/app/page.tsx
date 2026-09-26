@@ -1,109 +1,67 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { AppShell } from '@/components/layout/AppShell';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Spinner } from '@/components/ui/Spinner';
+import { Package2 } from 'lucide-react';
 
-export default function HomePage() {
-  const { user, isLoading, logout } = useAuth();
+export default function RootPage() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Fast check: if auth state is determined
+    if (!isLoading) {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
+      }
+      return;
+    }
+
+    // Safety fallback: max 1 second on the splash card, then redirect accordingly
+    const timer = setTimeout(() => {
+      if (user) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [mounted, user, isLoading, router]);
 
   return (
-    <AppShell>
-      <div className="max-w-4xl mx-auto py-8">
-        {isLoading ? (
-          <div className="py-20 text-center">
-            <Spinner size="lg" />
-            <p className="mt-4 text-sm text-surface-500">Checking authentication state...</p>
-          </div>
-        ) : user ? (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-brand-600 to-brand-800 text-white rounded-2xl p-8 shadow-lg">
-              <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-semibold uppercase tracking-wider mb-4 backdrop-blur-md">
-                Logged In Session
-              </span>
-              <h1 className="text-3xl font-extrabold tracking-tight">
-                Welcome back, {user.name || user.email}! 👋
-              </h1>
-              <p className="mt-2 text-brand-100 text-sm">
-                Your hackathon authentication foundation is live and ready for domain features.
-              </p>
-            </div>
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-10 select-none">
+      <div className="w-full max-w-[460px] bg-white/70 backdrop-blur-xl border border-white/80 rounded-[32px] p-8 sm:p-10 shadow-[0_16px_50px_rgba(0,0,0,0.06)] text-center animate-in fade-in duration-300">
+        <div className="w-16 h-16 rounded-full bg-[#1C1C1C] text-white flex items-center justify-center mx-auto mb-5 shadow-sm">
+          <Package2 className="w-8 h-8 text-white" />
+        </div>
 
-            <Card title="User Profile Summary" subtitle="Verified JWT session details">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="p-3 bg-surface-50 rounded-lg border border-surface-200/60">
-                  <span className="text-xs text-surface-500 block uppercase font-medium">User ID</span>
-                  <span className="font-mono text-surface-800 font-semibold">{user.id}</span>
-                </div>
-                <div className="p-3 bg-surface-50 rounded-lg border border-surface-200/60">
-                  <span className="text-xs text-surface-500 block uppercase font-medium">Email Address</span>
-                  <span className="font-medium text-surface-800">{user.email}</span>
-                </div>
-                <div className="p-3 bg-surface-50 rounded-lg border border-surface-200/60">
-                  <span className="text-xs text-surface-500 block uppercase font-medium">Display Name</span>
-                  <span className="font-medium text-surface-800">{user.name || 'Not provided'}</span>
-                </div>
-                <div className="p-3 bg-surface-50 rounded-lg border border-surface-200/60">
-                  <span className="text-xs text-surface-500 block uppercase font-medium">Joined At</span>
-                  <span className="font-medium text-surface-800">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
+        <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-[#F4F4F4] text-[#141414] tracking-wide mb-3">
+          STOCKSENSE IMS
+        </span>
 
-              <div className="mt-6 pt-4 border-t border-surface-100 flex items-center justify-between">
-                <p className="text-xs text-surface-500">
-                  Ready to attach models & CRUD routes when problem statement drops.
-                </p>
-                <Button variant="danger" size="sm" onClick={logout}>
-                  Log Out
-                </Button>
-              </div>
-            </Card>
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl font-bold">
-              🚀
-            </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-surface-900 sm:text-5xl">
-              Odoo Hackathon Starter
-            </h1>
-            <p className="mt-4 text-base text-surface-600 max-w-xl mx-auto">
-              Unified Next.js 14 App Router foundation with Prisma, JWT Auth, Zod Validation, and Tailwind design tokens.
-            </p>
+        <h1 className="text-2xl font-bold tracking-tight text-[#141414]">
+          StockSense
+        </h1>
+        <p className="mt-1 text-xs text-[#6E6E6E]">
+          Inventory Management System
+        </p>
 
-            <div className="mt-8 flex justify-center gap-4">
-              <Link href="/login">
-                <Button variant="primary" size="lg">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button variant="outline" size="lg">
-                  Create Account
-                </Button>
-              </Link>
-            </div>
-
-            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-3xl mx-auto">
-              <Card title="Unified Next.js">
-                <p className="text-xs text-surface-500">App Router pages & route handlers in a single repository.</p>
-              </Card>
-              <Card title="Prisma & Postgres">
-                <p className="text-xs text-surface-500">Clean User model & singleton instance ready for Neon database.</p>
-              </Card>
-              <Card title="JWT & Zod">
-                <p className="text-xs text-surface-500">Full auth flow with localStorage token persistence & Zod validation.</p>
-              </Card>
-            </div>
-          </div>
-        )}
+        <div className="mt-8 flex items-center justify-center gap-2.5 text-xs text-[#6E6E6E]">
+          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          <span>Checking session state...</span>
+        </div>
       </div>
-    </AppShell>
+    </div>
   );
 }
