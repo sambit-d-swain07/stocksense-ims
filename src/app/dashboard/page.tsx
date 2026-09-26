@@ -1,94 +1,87 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Package2, LogOut, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import React from 'react';
+import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+import { AppShell } from '@/components/layout/AppShell';
+import { getDashboardKpis } from '@/lib/operations-api';
+import { useAsyncData } from '@/hooks/useAsyncData';
+import { OperationKpiCard } from '@/components/operations/OperationKpiCard';
+import { LoadingState, ErrorState } from '@/components/operations/States';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const { user, isLoading, logout } = useAuth();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.replace('/login');
-    }
-  }, [user, isLoading, router]);
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-[420px] bg-white/70 backdrop-blur-xl border border-white/80 rounded-[32px] p-8 text-center shadow-[0_16px_50px_rgba(0,0,0,0.06)]">
-          <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs text-[#6E6E6E]">Verifying session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleLogout = () => {
-    logout();
-    router.replace('/login');
-  };
+  const { data: kpis, isLoading, error, reload } = useAsyncData(getDashboardKpis, []);
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-10 flex flex-col items-center justify-center">
-      <div className="w-full max-w-[800px] bg-white/60 backdrop-blur-xl border border-white/80 rounded-[32px] p-8 sm:p-10 shadow-[0_16px_50px_rgba(0,0,0,0.06)] space-y-6">
-        <div className="flex items-center justify-between pb-6 border-b border-[#E2E2E2]">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-[#1C1C1C] text-white flex items-center justify-center shadow-sm">
-              <Package2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-[#141414]">
-                Hi, {user.loginId}!
-              </h1>
-              <p className="text-xs text-[#6E6E6E]">
-                Authenticated StockSense Session
-              </p>
-            </div>
+    <AppShell>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-surface-900">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Today's inventory operations</p>
+        </div>
+
+        {/* Content */}
+        {isLoading ? (
+          <LoadingState message="Loading dashboard statistics..." />
+        ) : error ? (
+          <ErrorState message={error} onRetry={reload} />
+        ) : kpis ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* RECEIPT Card */}
+            <OperationKpiCard
+              title="Receipt"
+              icon={<ArrowDownToLine className="w-5 h-5" />}
+              actionLabel={`${kpis.receipts.toProcess} to receive`}
+              actionHref="/operations/receipts"
+              stats={[
+                {
+                  label: 'Late',
+                  value: kpis.receipts.late,
+                  tone: 'warning',
+                  showDot: true,
+                  dotColor: 'amber',
+                  href: '/operations/receipts',
+                },
+                {
+                  label: 'operations',
+                  value: kpis.receipts.total,
+                  href: '/operations/receipts',
+                },
+              ]}
+            />
+
+            {/* DELIVERY Card */}
+            <OperationKpiCard
+              title="Delivery"
+              icon={<ArrowUpFromLine className="w-5 h-5" />}
+              actionLabel={`${kpis.deliveries.toProcess} to deliver`}
+              actionHref="/operations/deliveries"
+              stats={[
+                {
+                  label: 'Late',
+                  value: kpis.deliveries.late,
+                  tone: 'warning',
+                  showDot: true,
+                  dotColor: 'amber',
+                  href: '/operations/deliveries',
+                },
+                {
+                  label: 'waiting',
+                  value: kpis.deliveries.waiting,
+                  showDot: true,
+                  dotColor: 'amber',
+                  href: '/operations/deliveries',
+                },
+                {
+                  label: 'operations',
+                  value: kpis.deliveries.total,
+                  href: '/operations/deliveries',
+                },
+              ]}
+            />
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLogout}
-            className="gap-2 text-xs font-semibold"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Log Out
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card variant="highlight">
-            <span className="text-[11px] uppercase tracking-wider text-[#A9A9A9] font-medium block">
-              Active User
-            </span>
-            <span className="text-xl font-bold text-white block mt-1">
-              {user.loginId}
-            </span>
-            <span className="text-xs text-[#A9A9A9] block mt-0.5">
-              {user.email}
-            </span>
-          </Card>
-
-          <Card variant="default">
-            <span className="text-[11px] uppercase tracking-wider text-[#6E6E6E] font-medium block">
-              Session Role
-            </span>
-            <span className="text-xl font-bold text-[#141414] block mt-1">
-              {user.role || 'MANAGER'}
-            </span>
-            <span className="text-xs text-[#6E6E6E] block mt-0.5">
-              Ready for Step 2: Full App Layout + Dashboard KPIs
-            </span>
-          </Card>
-        </div>
+        ) : null}
       </div>
-    </div>
+    </AppShell>
   );
 }

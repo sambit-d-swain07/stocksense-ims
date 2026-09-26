@@ -17,3 +17,15 @@ export interface Receipt {
   status: ReceiptStatus;
   lines: OperationLine[];
 }
+
+export interface OperationKpi {
+  toProcess: number;
+  late: number;
+  waiting?: number;
+  total: number;
+}
+
+export interface DashboardKpis {
+  receipts: OperationKpi;
+  deliveries: OperationKpi;
+}
