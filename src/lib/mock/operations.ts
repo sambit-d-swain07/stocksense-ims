@@ -1,4 +1,4 @@
-import { Receipt, DashboardKpis } from '@/types/operations';
+import { Receipt, DashboardKpis, StockItem } from '@/types/operations';
 
 function daysFromNow(n: number): string {
   const d = new Date();
@@ -94,3 +94,86 @@ export const mockDashboardKpis: DashboardKpis = {
   receipts: { toProcess: 4, late: 1, total: 6 },
   deliveries: { toProcess: 2, late: 1, waiting: 2, total: 6 },
 };
+
+export const mockStockItems: StockItem[] = [
+  {
+    id: 'stk-001',
+    productId: 'prod-desk',
+    productName: 'Desk',
+    sku: 'DSK-001',
+    unit: 'Units',
+    costPerUnit: 3000,
+    onHand: 50,
+    reserved: 5,
+  },
+  {
+    id: 'stk-002',
+    productId: 'prod-table',
+    productName: 'Table',
+    sku: 'TBL-001',
+    unit: 'Units',
+    costPerUnit: 3000,
+    onHand: 50,
+    reserved: 5,
+  },
+  {
+    id: 'stk-003',
+    productId: 'prod-laptop',
+    productName: 'Laptop',
+    sku: 'LPT-014',
+    unit: 'Units',
+    costPerUnit: 55000,
+    onHand: 10,
+    reserved: 2,
+  },
+  {
+    id: 'stk-004',
+    productId: 'prod-keyboard',
+    productName: 'Keyboard',
+    sku: 'KEY-001',
+    unit: 'Units',
+    costPerUnit: 1500,
+    onHand: 25,
+    reserved: 5,
+  },
+  {
+    id: 'stk-005',
+    productId: 'prod-mouse',
+    productName: 'Mouse',
+    sku: 'MOU-001',
+    unit: 'Units',
+    costPerUnit: 800,
+    onHand: 50,
+    reserved: 0,
+  },
+  {
+    id: 'stk-006',
+    productId: 'prod-monitor',
+    productName: 'Monitor',
+    sku: 'MON-001',
+    unit: 'Units',
+    costPerUnit: 12000,
+    onHand: 15,
+    reserved: 3,
+  },
+  {
+    id: 'stk-007',
+    productId: 'prod-chair',
+    productName: 'Office Chair',
+    sku: 'CHR-001',
+    unit: 'Units',
+    costPerUnit: 4500,
+    onHand: 8,
+    reserved: 8, // Free to use = 0 -> amber display
+  },
+  {
+    id: 'stk-008',
+    productId: 'prod-steel',
+    productName: 'Steel Rod',
+    sku: 'STL-001',
+    unit: 'kg',
+    costPerUnit: 650,
+    onHand: 100,
+    reserved: 10,
+  },
+];
