@@ -14,8 +14,7 @@ body {
   background-attachment: fixed;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-h-screen;
+  min-height: 100vh;
 }
 
 .tabular {
