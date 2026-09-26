@@ -4,8 +4,10 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 export interface User {
   id: string;
+  loginId?: string;
   name?: string | null;
   email: string;
+  role?: string;
   createdAt: string;
 }
 
@@ -13,8 +15,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; fields?: Record<string, string> }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string; fields?: Record<string, string> }>;
+  login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string; fields?: Record<string, string> }>;
+  register: (loginId: string, email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string; fields?: Record<string, string> }>;
   logout: () => void;
 }
 
@@ -40,7 +42,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(json.data.user);
         setToken(authToken);
       } else {
-        // Token is invalid/expired
         localStorage.removeItem(TOKEN_KEY);
         setToken(null);
         setUser(null);
@@ -64,12 +65,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [fetchCurrentUser]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
     try {
+      const isEmail = identifier.includes('@');
+      const body = isEmail ? { email: identifier, password } : { loginId: identifier, password };
+
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       });
 
       const json = await res.json();
@@ -92,12 +96,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (loginId: string, email: string, password: string, name?: string) => {
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ loginId, email, password, name }),
       });
 
       const json = await res.json();

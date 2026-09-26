@@ -1,13 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'Odoo Hackathon Application',
-  description: 'Fast Next.js 14 + Prisma foundation for hackathon workflows',
+  title: 'StockSense IMS — Real-Time Inventory & Ledger System',
+  description: 'Clean, real-time inventory management and stock ledger system powered by Neon PostgreSQL',
 };
 
 export default function RootLayout({
@@ -17,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans antialiased bg-[#f5f5f7] text-zinc-900">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

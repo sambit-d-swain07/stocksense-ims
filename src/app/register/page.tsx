@@ -4,135 +4,164 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Toast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
 
-  const [name, setName] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
-    setFieldErrors({});
 
-    const errors: Record<string, string> = {};
-    if (!name.trim()) errors.name = 'Name is required';
-    if (!email.trim()) errors.email = 'Email is required';
-    if (!password) errors.password = 'Password is required';
-    else if (password.length < 6) errors.password = 'Password must be at least 6 characters';
-
-    if (password !== confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+    if (loginId.length < 6 || loginId.length > 12) {
+      setGeneralError('Login ID must be between 6 and 12 characters');
+      return;
     }
 
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
+    if (password.length < 8) {
+      setGeneralError('Password must be at least 8 characters long');
+      return;
+    }
+
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      setGeneralError('Password must contain uppercase, lowercase, and a special character');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setGeneralError('Passwords do not match');
       return;
     }
 
     setIsSubmitting(true);
-    const result = await register(name, email, password);
+    const result = await register(loginId, email, password, name);
     setIsSubmitting(false);
 
     if (result.success) {
       router.push('/');
     } else {
-      if (result.fields) {
-        setFieldErrors(result.fields);
-      }
-      setGeneralError(result.error || 'Failed to register account');
+      setGeneralError(result.error || 'Registration failed');
     }
   };
 
   return (
     <AppShell>
-      <div className="max-w-md mx-auto py-12">
-        <Card
-          title="Create your account"
-          subtitle="Get started with your hackathon workspace"
-        >
+      <div className="max-w-md mx-auto py-8">
+        <div className="bg-white border border-zinc-200 rounded-2xl p-8">
+          <div className="text-center mb-6">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+              S
+            </div>
+            <h1 className="text-xl font-bold text-zinc-900 tracking-tight">
+              Create StockSense Account
+            </h1>
+            <p className="text-xs text-zinc-500 mt-1">Setup your inventory manager profile</p>
+          </div>
+
           {generalError && (
-            <Toast
-              type="error"
-              message={generalError}
-              onClose={() => setGeneralError(null)}
-            />
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs font-medium text-rose-700 text-center">
+              {generalError}
+            </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Full Name"
-              type="text"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              error={fieldErrors.name}
-              required
-            />
+          <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+            <div>
+              <label className="block text-xs font-semibold uppercase text-zinc-700 mb-1">
+                Login ID (6–12 Characters) *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. manager10"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 placeholder:text-zinc-400"
+                minLength={6}
+                maxLength={12}
+                required
+              />
+            </div>
 
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={fieldErrors.email}
-              autoComplete="email"
-              required
-            />
+            <div>
+              <label className="block text-xs font-semibold uppercase text-zinc-700 mb-1">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                placeholder="you@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 placeholder:text-zinc-400"
+                required
+              />
+            </div>
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="At least 6 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={fieldErrors.password}
-              autoComplete="new-password"
-              required
-            />
+            <div>
+              <label className="block text-xs font-semibold uppercase text-zinc-700 mb-1">
+                Full Name (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 placeholder:text-zinc-400"
+              />
+            </div>
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              placeholder="Re-enter password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              error={fieldErrors.confirmPassword}
-              autoComplete="new-password"
-              required
-            />
+            <div>
+              <label className="block text-xs font-semibold uppercase text-zinc-700 mb-1">
+                Password * (Min 8 chars, A-Z, a-z, special)
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 placeholder:text-zinc-400"
+                required
+              />
+            </div>
 
-            <Button
+            <div>
+              <label className="block text-xs font-semibold uppercase text-zinc-700 mb-1">
+                Confirm Password *
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 placeholder:text-zinc-400"
+                required
+              />
+            </div>
+
+            <button
               type="submit"
-              variant="primary"
-              className="w-full mt-2"
-              isLoading={isSubmitting}
+              disabled={isSubmitting}
+              className="w-full bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg py-2.5 text-xs font-semibold transition-colors mt-2"
             >
-              Create Account
-            </Button>
+              {isSubmitting ? 'Creating Account...' : 'Sign Up'}
+            </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-surface-500">
+          <div className="mt-6 pt-4 border-t border-zinc-100 text-center text-xs text-zinc-500">
             Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-brand-600 hover:text-brand-700 underline">
-              Sign in instead
+            <Link href="/login" className="font-semibold text-zinc-900 hover:underline">
+              Sign In
             </Link>
           </div>
-        </Card>
+        </div>
       </div>
     </AppShell>
   );

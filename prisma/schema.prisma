@@ -12,6 +12,24 @@ enum Role {
   STAFF
 }
 
+enum ReceiptStatus {
+  DRAFT
+  READY
+  DONE
+}
+
+enum DeliveryStatus {
+  DRAFT
+  WAITING
+  READY
+  DONE
+}
+
+enum MoveType {
+  IN
+  OUT
+}
+
 model User {
   id        String   @id @default(cuid())
   loginId   String   @unique
@@ -32,12 +50,16 @@ model Warehouse {
 }
 
 model Location {
-  id          String    @id @default(cuid())
-  name        String
-  shortCode   String
-  warehouseId String
-  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
-  stocks      Stock[]
+  id            String         @id @default(cuid())
+  name          String
+  shortCode     String
+  warehouseId   String
+  warehouse     Warehouse      @relation(fields: [warehouseId], references: [id])
+  stocks        Stock[]
+  receiptItems  ReceiptItem[]
+  deliveryItems DeliveryItem[]
+  adjustments   Adjustment[]
+  stockMoves    StockMove[]
 }
 
 model Category {
@@ -47,15 +69,19 @@ model Category {
 }
 
 model Product {
-  id           String   @id @default(cuid())
-  name         String
-  sku          String   @unique
-  categoryId   String
-  category     Category @relation(fields: [categoryId], references: [id])
-  unit         String
-  costPerUnit  Float    @default(0)
-  reorderPoint Int      @default(0)
-  stocks       Stock[]
+  id            String         @id @default(cuid())
+  name          String
+  sku           String         @unique
+  categoryId    String
+  category      Category       @relation(fields: [categoryId], references: [id])
+  unit          String
+  costPerUnit   Float          @default(0)
+  reorderPoint  Int            @default(0)
+  stocks        Stock[]
+  receiptItems  ReceiptItem[]
+  deliveryItems DeliveryItem[]
+  adjustments   Adjustment[]
+  stockMoves    StockMove[]
 }
 
 model Stock {
@@ -68,4 +94,73 @@ model Stock {
   location   Location @relation(fields: [locationId], references: [id])
 
   @@unique([productId, locationId])
+}
+
+model Receipt {
+  id           String        @id @default(cuid())
+  reference    String        @unique
+  supplierName String?
+  status       ReceiptStatus @default(DRAFT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  items        ReceiptItem[]
+}
+
+model ReceiptItem {
+  id         String   @id @default(cuid())
+  receiptId  String
+  productId  String
+  locationId String
+  quantity   Int
+  receipt    Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
+}
+
+model Delivery {
+  id           String         @id @default(cuid())
+  reference    String         @unique
+  customerName String?
+  status       DeliveryStatus @default(DRAFT)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        DeliveryItem[]
+}
+
+model DeliveryItem {
+  id         String   @id @default(cuid())
+  deliveryId String
+  productId  String
+  locationId String
+  quantity   Int
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
+}
+
+model Adjustment {
+  id         String   @id @default(cuid())
+  reference  String   @unique
+  productId  String
+  locationId String
+  systemQty  Int
+  countedQty Int
+  difference Int
+  reason     String?
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
+}
+
+model StockMove {
+  id         String   @id @default(cuid())
+  type       MoveType
+  reference  String
+  productId  String
+  locationId String
+  quantity   Int
+  notes      String?
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
 }

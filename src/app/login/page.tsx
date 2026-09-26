@@ -4,106 +4,111 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Toast } from '@/components/ui/Toast';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
-    setFieldErrors({});
 
-    if (!email) {
-      setFieldErrors((prev) => ({ ...prev, email: 'Email is required' }));
+    if (!identifier) {
+      setGeneralError('Please enter your Login ID or Email Address');
       return;
     }
     if (!password) {
-      setFieldErrors((prev) => ({ ...prev, password: 'Password is required' }));
+      setGeneralError('Please enter your password');
       return;
     }
 
     setIsSubmitting(true);
-    const result = await login(email, password);
+    const result = await login(identifier, password);
     setIsSubmitting(false);
 
     if (result.success) {
       router.push('/');
     } else {
-      if (result.fields) {
-        setFieldErrors(result.fields);
-      }
-      setGeneralError(result.error || 'Failed to login');
+      setGeneralError(result.error || 'Invalid credentials');
     }
   };
 
   return (
     <AppShell>
       <div className="max-w-md mx-auto py-12">
-        <Card
-          title="Sign in to your account"
-          subtitle="Enter your credentials to access your dashboard"
-        >
+        <div className="bg-white border border-zinc-200 rounded-2xl p-8">
+          <div className="text-center mb-6">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+              S
+            </div>
+            <h1 className="text-xl font-bold text-zinc-900 tracking-tight">
+              StockSense IMS
+            </h1>
+            <p className="text-xs text-zinc-500 mt-1">Sign in with your Login ID or Email</p>
+          </div>
+
           {generalError && (
-            <Toast
-              type="error"
-              message={generalError}
-              onClose={() => setGeneralError(null)}
-            />
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs font-medium text-rose-700 text-center">
+              {generalError}
+            </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={fieldErrors.email}
-              autoComplete="email"
-              required
-            />
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-xs font-semibold uppercase text-zinc-700 mb-1">
+                Login ID or Email
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. adminuser or admin@stocksense.com"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 placeholder:text-zinc-400"
+                required
+              />
+            </div>
 
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={fieldErrors.password}
-              autoComplete="current-password"
-              required
-            />
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-xs font-semibold uppercase text-zinc-700">
+                  Password
+                </label>
+                <Link href="/forgot-password" className="text-xs font-medium text-zinc-900 hover:underline">
+                  Forgot Password?
+                </Link>
+              </div>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-zinc-900 text-zinc-900 placeholder:text-zinc-400"
+                required
+              />
+            </div>
 
-            <Button
+            <button
               type="submit"
-              variant="primary"
-              className="w-full mt-2"
-              isLoading={isSubmitting}
+              disabled={isSubmitting}
+              className="w-full bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg py-2.5 text-xs font-semibold transition-colors mt-2"
             >
-              Sign In
-            </Button>
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
+            </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-surface-500">
+          <div className="mt-6 pt-4 border-t border-zinc-100 text-center text-xs text-zinc-500">
             Don&apos;t have an account yet?{' '}
-            <Link href="/register" className="font-semibold text-brand-600 hover:text-brand-700 underline">
-              Create an account
+            <Link href="/register" className="font-semibold text-zinc-900 hover:underline">
+              Sign Up
             </Link>
           </div>
-        </Card>
+        </div>
       </div>
     </AppShell>
   );
