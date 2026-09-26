@@ -1,10 +1,29 @@
-import { Receipt, DashboardKpis, StockItem } from '@/types/operations';
+import { Receipt, DashboardKpis, StockItem, ProductOption } from '@/types/operations';
 
 function daysFromNow(n: number): string {
   const d = new Date();
   d.setDate(d.getDate() + n);
   return d.toISOString().split('T')[0];
 }
+
+export const mockProducts: ProductOption[] = [
+  { id: 'prod-laptop', name: 'Laptop', sku: 'LPT-014', unit: 'Units' },
+  { id: 'prod-keyboard', name: 'Keyboard', sku: 'KBD-001', unit: 'Units' },
+  { id: 'prod-mouse', name: 'Mouse', sku: 'MSE-002', unit: 'Units' },
+  { id: 'prod-monitor', name: 'Monitor 24"', sku: 'MON-024', unit: 'Units' },
+  { id: 'prod-desk', name: 'Office Desk', sku: 'DSK-012', unit: 'Units' },
+  { id: 'prod-chair', name: 'Office Chair', sku: 'CHR-005', unit: 'Units' },
+  { id: 'prod-steel', name: 'Steel Rod', sku: 'STL-001', unit: 'kg' },
+];
+
+export const mockSuppliers: string[] = [
+  'ABC Suppliers Ltd',
+  'Tech Logix Corp',
+  'Global Furniture Co',
+  'Component Hub',
+  'Apex Components',
+  'Office Needs Inc',
+];
 
 export const mockReceipts: Receipt[] = [
   {
@@ -17,8 +36,8 @@ export const mockReceipts: Receipt[] = [
     responsible: 'Sarah Jenkins',
     status: 'done',
     lines: [
-      { id: 'line-1', productId: 'Laptop', quantity: 5 },
-      { id: 'line-2', productId: 'Keyboard', quantity: 10 },
+      { id: 'line-1', productId: 'prod-laptop', quantity: 5 },
+      { id: 'line-2', productId: 'prod-keyboard', quantity: 10 },
     ],
   },
   {
@@ -31,8 +50,8 @@ export const mockReceipts: Receipt[] = [
     responsible: 'Alex Johnson',
     status: 'ready',
     lines: [
-      { id: 'line-3', productId: 'Mouse', quantity: 20 },
-      { id: 'line-4', productId: 'Monitor', quantity: 5 },
+      { id: 'line-3', productId: 'prod-mouse', quantity: 20 },
+      { id: 'line-4', productId: 'prod-monitor', quantity: 5 },
     ],
   },
   {
@@ -45,8 +64,8 @@ export const mockReceipts: Receipt[] = [
     responsible: 'Sarah Jenkins',
     status: 'draft',
     lines: [
-      { id: 'line-5', productId: 'Office Desk', quantity: 4 },
-      { id: 'line-6', productId: 'Office Chair', quantity: 10 },
+      { id: 'line-5', productId: 'prod-desk', quantity: 4 },
+      { id: 'line-6', productId: 'prod-chair', quantity: 10 },
     ],
   },
   {
@@ -59,7 +78,7 @@ export const mockReceipts: Receipt[] = [
     responsible: 'Unassigned',
     status: 'canceled',
     lines: [
-      { id: 'line-7', productId: 'Keyboard', quantity: 15 },
+      { id: 'line-7', productId: 'prod-keyboard', quantity: 15 },
     ],
   },
   {
@@ -72,7 +91,7 @@ export const mockReceipts: Receipt[] = [
     responsible: 'Alex Johnson',
     status: 'ready',
     lines: [
-      { id: 'line-8', productId: 'Laptop', quantity: 8 },
+      { id: 'line-8', productId: 'prod-laptop', quantity: 8 },
     ],
   },
   {
@@ -85,7 +104,7 @@ export const mockReceipts: Receipt[] = [
     responsible: 'Sarah Jenkins',
     status: 'draft',
     lines: [
-      { id: 'line-9', productId: 'Office Chair', quantity: 5 },
+      { id: 'line-9', productId: 'prod-chair', quantity: 5 },
     ],
   },
 ];
@@ -99,8 +118,8 @@ export const mockStockItems: StockItem[] = [
   {
     id: 'stk-001',
     productId: 'prod-desk',
-    productName: 'Desk',
-    sku: 'DSK-001',
+    productName: 'Office Desk',
+    sku: 'DSK-012',
     unit: 'Units',
     costPerUnit: 3000,
     onHand: 50,
@@ -130,7 +149,7 @@ export const mockStockItems: StockItem[] = [
     id: 'stk-004',
     productId: 'prod-keyboard',
     productName: 'Keyboard',
-    sku: 'KEY-001',
+    sku: 'KBD-001',
     unit: 'Units',
     costPerUnit: 1500,
     onHand: 25,
@@ -140,7 +159,7 @@ export const mockStockItems: StockItem[] = [
     id: 'stk-005',
     productId: 'prod-mouse',
     productName: 'Mouse',
-    sku: 'MOU-001',
+    sku: 'MSE-002',
     unit: 'Units',
     costPerUnit: 800,
     onHand: 50,
@@ -149,8 +168,8 @@ export const mockStockItems: StockItem[] = [
   {
     id: 'stk-006',
     productId: 'prod-monitor',
-    productName: 'Monitor',
-    sku: 'MON-001',
+    productName: 'Monitor 24"',
+    sku: 'MON-024',
     unit: 'Units',
     costPerUnit: 12000,
     onHand: 15,
@@ -160,11 +179,11 @@ export const mockStockItems: StockItem[] = [
     id: 'stk-007',
     productId: 'prod-chair',
     productName: 'Office Chair',
-    sku: 'CHR-001',
+    sku: 'CHR-005',
     unit: 'Units',
     costPerUnit: 4500,
     onHand: 8,
-    reserved: 8, // Free to use = 0 -> amber display
+    reserved: 8,
   },
   {
     id: 'stk-008',

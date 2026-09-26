@@ -12,42 +12,54 @@ enum Role {
   STAFF
 }
 
+enum ReceiptStatus {
+  DRAFT
+  READY
+  DONE
+}
+
+enum DeliveryStatus {
+  DRAFT
+  WAITING
+  READY
+  DONE
+}
+
+enum MoveType {
+  IN
+  OUT
+}
+
 model User {
-  id                 String       @id @default(cuid())
-  loginId            String       @unique
-  email              String       @unique
-  password           String
-  name               String?
-  role               Role         @default(STAFF)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  receiptsCreated    Receipt[]    @relation("ReceiptCreatedBy")
-  deliveriesCreated  Delivery[]   @relation("DeliveryCreatedBy")
-  adjustmentsCreated Adjustment[] @relation("AdjustmentCreatedBy")
-  ledgerEntries      StockLedger[] @relation("LedgerCreatedBy")
+  id        String   @id @default(cuid())
+  loginId   String   @unique
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Warehouse {
-  id         String     @id @default(cuid())
-  name       String
-  shortCode  String     @unique
-  address    String?
-  locations  Location[]
-  receipts   Receipt[]
-  deliveries Delivery[]
+  id        String     @id @default(cuid())
+  name      String
+  shortCode String     @unique
+  address   String?
+  locations Location[]
 }
 
 model Location {
-  id          String        @id @default(cuid())
-  name        String
-  shortCode   String
-  warehouseId String
-  warehouse   Warehouse     @relation(fields: [warehouseId], references: [id])
-  stocks      Stock[]
-  receipts    Receipt[]
-  deliveries  Delivery[]
-  adjustments Adjustment[]
-  ledger      StockLedger[]
+  id            String         @id @default(cuid())
+  name          String
+  shortCode     String
+  warehouseId   String
+  warehouse     Warehouse      @relation(fields: [warehouseId], references: [id])
+  stocks        Stock[]
+  receiptItems  ReceiptItem[]
+  deliveryItems DeliveryItem[]
+  adjustments   Adjustment[]
+  stockMoves    StockMove[]
 }
 
 model Category {
@@ -66,10 +78,10 @@ model Product {
   costPerUnit   Float          @default(0)
   reorderPoint  Int            @default(0)
   stocks        Stock[]
-  receiptLines  ReceiptLine[]
-  deliveryLines DeliveryLine[]
+  receiptItems  ReceiptItem[]
+  deliveryItems DeliveryItem[]
   adjustments   Adjustment[]
-  ledger        StockLedger[]
+  stockMoves    StockMove[]
 }
 
 model Stock {
@@ -84,122 +96,71 @@ model Stock {
   @@unique([productId, locationId])
 }
 
-enum ReceiptStatus {
-  DRAFT
-  READY
-  DONE
-}
-
-enum DeliveryStatus {
-  DRAFT
-  READY
-  WAITING
-  DONE
-}
-
-enum AdjustmentType {
-  INCREASE
-  DECREASE
-}
-
-enum LedgerType {
-  RECEIPT
-  DELIVERY
-  ADJUSTMENT
-}
-
 model Receipt {
-  id          String        @id @default(cuid())
-  referenceNo String        @unique
-  warehouseId String
-  locationId  String
-  status      ReceiptStatus @default(DRAFT)
-  createdById String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  warehouse Warehouse   @relation(fields: [warehouseId], references: [id])
-  location  Location    @relation(fields: [locationId], references: [id])
-  createdBy User        @relation("ReceiptCreatedBy", fields: [createdById], references: [id])
-  lines     ReceiptLine[]
+  id           String        @id @default(cuid())
+  reference    String        @unique
+  supplierName String?
+  status       ReceiptStatus @default(DRAFT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  items        ReceiptItem[]
 }
 
-model ReceiptLine {
-  id        String  @id @default(cuid())
-  receiptId String
-  productId String
-  quantity  Int
-  unitCost  Float   @default(0)
-
-  receipt Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-
-  @@unique([receiptId, productId])
+model ReceiptItem {
+  id         String   @id @default(cuid())
+  receiptId  String
+  productId  String
+  locationId String
+  quantity   Int
+  receipt    Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
 }
 
 model Delivery {
-  id          String         @id @default(cuid())
-  referenceNo String         @unique
-  warehouseId String
-  locationId  String
-  status      DeliveryStatus @default(DRAFT)
-  createdById String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  warehouse Warehouse    @relation(fields: [warehouseId], references: [id])
-  location  Location     @relation(fields: [locationId], references: [id])
-  createdBy User         @relation("DeliveryCreatedBy", fields: [createdById], references: [id])
-  lines     DeliveryLine[]
+  id           String         @id @default(cuid())
+  reference    String         @unique
+  customerName String?
+  status       DeliveryStatus @default(DRAFT)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        DeliveryItem[]
 }
 
-model DeliveryLine {
+model DeliveryItem {
   id         String   @id @default(cuid())
   deliveryId String
   productId  String
+  locationId String
   quantity   Int
-
-  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
-  product  Product  @relation(fields: [productId], references: [id])
-
-  @@unique([deliveryId, productId])
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
 }
 
 model Adjustment {
-  id          String         @id @default(cuid())
-  referenceNo String         @unique
-  locationId  String
-  productId   String
-  type        AdjustmentType
-  quantity    Int
-  reason      String?
-  createdById String
-  createdAt   DateTime       @default(now())
-
-  location  Location @relation(fields: [locationId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-  createdBy User     @relation("AdjustmentCreatedBy", fields: [createdById], references: [id])
+  id         String   @id @default(cuid())
+  reference  String   @unique
+  productId  String
+  locationId String
+  systemQty  Int
+  countedQty Int
+  difference Int
+  reason     String?
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
 }
 
-model StockLedger {
-  id            String     @id @default(cuid())
-  productId     String
-  locationId    String
-  type          LedgerType
-  quantity      Int
-  beforeQuantity Int
-  afterQuantity Int
-  referenceType String
-  referenceNo   String
-  note          String?
-  createdById   String
-  createdAt     DateTime   @default(now())
-
-  product   Product  @relation(fields: [productId], references: [id])
-  location  Location @relation(fields: [locationId], references: [id])
-  createdBy User     @relation("LedgerCreatedBy", fields: [createdById], references: [id])
-
-  @@index([productId, locationId])
-  @@index([referenceNo])
-  @@index([createdAt])
+model StockMove {
+  id         String   @id @default(cuid())
+  type       MoveType
+  reference  String
+  productId  String
+  locationId String
+  quantity   Int
+  notes      String?
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id])
+  location   Location @relation(fields: [locationId], references: [id])
 }

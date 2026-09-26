@@ -5,7 +5,6 @@ export interface CardProps {
   title?: string;
   subtitle?: string;
   footer?: React.ReactNode;
-  variant?: 'default' | 'highlight';
   className?: string;
 }
 
@@ -14,43 +13,22 @@ export const Card: React.FC<CardProps> = ({
   title,
   subtitle,
   footer,
-  variant = 'default',
   className = '',
 }) => {
-  const isHighlight = variant === 'highlight';
-
   return (
-    <div
-      className={`rounded-[24px] p-6 transition-all duration-200 ${
-        isHighlight
-          ? 'bg-[#1C1C1C] text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]'
-          : 'bg-white text-[#141414] shadow-[0_8px_30px_rgba(0,0,0,0.05)] border border-[#E2E2E2]'
-      } ${className}`}
-    >
+    <div className={`bg-white border border-zinc-200 rounded-xl overflow-hidden ${className}`}>
       {(title || subtitle) && (
-        <div className="mb-4">
-          {title && (
-            <h3
-              className={`text-lg font-bold tracking-tight ${
-                isHighlight ? 'text-white' : 'text-[#141414]'
-              }`}
-            >
-              {title}
-            </h3>
-          )}
-          {subtitle && (
-            <p
-              className={`text-xs mt-1 ${
-                isHighlight ? 'text-[#A9A9A9]' : 'text-[#6E6E6E]'
-              }`}
-            >
-              {subtitle}
-            </p>
-          )}
+        <div className="px-6 py-4 border-b border-zinc-100 bg-white">
+          {title && <h3 className="text-base font-semibold text-zinc-900">{title}</h3>}
+          {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
         </div>
       )}
-      <div>{children}</div>
-      {footer && <div className="mt-4 pt-4 border-t border-[#E2E2E2]/60">{footer}</div>}
+      <div className="p-6">{children}</div>
+      {footer && (
+        <div className="px-6 py-3 border-t border-zinc-100 bg-zinc-50/50">
+          {footer}
+        </div>
+      )}
     </div>
   );
 };

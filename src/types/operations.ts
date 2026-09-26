@@ -6,6 +6,13 @@ export interface OperationLine {
   quantity: number;
 }
 
+export interface ProductOption {
+  id: string;
+  name: string;
+  sku: string;
+  unit: string;
+}
+
 export interface Receipt {
   id: string;
   reference: string;

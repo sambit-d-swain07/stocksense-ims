@@ -1,123 +1,177 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
+import { prisma, withRetry } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
+import { validateBody } from '@/lib/validate';
+import { generateAdjustmentRef } from '@/lib/ref';
 
-export async function POST(req: Request) {
-  const auth = await requireAuth(req);
-  if (auth.errorResponse) return auth.errorResponse;
+export const dynamic = 'force-dynamic';
 
-  try {
-    const body = await req.json();
-    const { referenceNo, locationId, productId, type, quantity, reason } = body;
-
-    if (!referenceNo || !locationId || !productId || !type || typeof quantity !== 'number' || quantity <= 0) {
-      return NextResponse.json({ error: 'Invalid input data' }, { status: 400 });
-    }
-
-    if (type !== 'INCREASE' && type !== 'DECREASE') {
-      return NextResponse.json({ error: 'Invalid adjustment type' }, { status: 400 });
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      let updatedStock;
-      
-      if (type === 'INCREASE') {
-        updatedStock = await tx.stock.upsert({
-          where: { productId_locationId: { productId, locationId } },
-          update: { onHand: { increment: quantity } },
-          create: { productId, locationId, onHand: quantity },
-        });
-      } else {
-        // For DECREASE, we perform an atomic decrement
-        updatedStock = await tx.stock.update({
-          where: { productId_locationId: { productId, locationId } },
-          data: { onHand: { decrement: quantity } },
-        });
-
-        // Verify we didn't drop below zero
-        if (updatedStock.onHand < 0) {
-          throw new Error('Adjustment would result in negative stock');
-        }
-      }
-
-      // 3. Create Adjustment record
-      const adjustment = await tx.adjustment.create({
-        data: {
-          referenceNo,
-          locationId,
-          productId,
-          type,
-          quantity,
-          reason,
-          createdById: auth.user!.userId,
-        },
-      });
-
-      // Calculate before/after
-      const afterQuantity = updatedStock.onHand;
-      const beforeQuantity = type === 'INCREASE' ? afterQuantity - quantity : afterQuantity + quantity;
-
-      // 4. Create StockLedger record
-      const ledgerQty = type === 'INCREASE' ? quantity : -quantity;
-      await tx.stockLedger.create({
-        data: {
-          productId,
-          locationId,
-          type: 'ADJUSTMENT',
-          quantity: ledgerQty,
-          beforeQuantity,
-          afterQuantity,
-          referenceType: 'Adjustment',
-          referenceNo: adjustment.referenceNo,
-          createdById: auth.user!.userId,
-        },
-      });
-
-      return adjustment;
-    });
-
-    return NextResponse.json(result, { status: 201 });
-  } catch (error: any) {
-    console.error('Adjustment POST error:', error);
-    if (error.code === 'P2025' && body.type === 'DECREASE') {
-      return NextResponse.json({ error: 'Stock record not found to decrease' }, { status: 404 });
-    }
-    if (error.message && error.message.includes('negative stock')) {
-      return NextResponse.json({ error: error.message }, { status: 409 });
-    }
-    if (error.code === 'P2002') {
-      return NextResponse.json({ error: 'Reference number already exists' }, { status: 409 });
-    }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+const createAdjustmentSchema = z.object({
+  reference: z.string().optional(),
+  productId: z.string().min(1, 'Product ID is required'),
+  locationId: z.string().min(1, 'Location ID is required'),
+  countedQty: z.number().int().min(0, 'Counted quantity must be 0 or greater'),
+  reason: z.string().optional(),
+});
 
 export async function GET(req: Request) {
-  const auth = await requireAuth(req);
-  if (auth.errorResponse) return auth.errorResponse;
-
-  const { searchParams } = new URL(req.url);
-  const locationId = searchParams.get('locationId');
-  const productId = searchParams.get('productId');
-
-  const where: any = {};
-  if (locationId) where.locationId = locationId;
-  if (productId) where.productId = productId;
+  const { errorResponse } = await requireAuth(req);
+  if (errorResponse) return errorResponse;
 
   try {
     const adjustments = await prisma.adjustment.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
       include: {
-        product: { select: { name: true, sku: true } },
-        location: { select: { name: true } },
-        createdBy: { select: { name: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            unit: true,
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            name: true,
+            shortCode: true,
+            warehouse: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const data = adjustments.map((adj) => ({
+      ...adj,
+      productName: adj.product?.name || '',
+      productSku: adj.product?.sku || '',
+      locationName: adj.location?.name || '',
+      warehouseName: adj.location?.warehouse?.name || '',
+    }));
+
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    console.error('GET /api/adjustments error:', err);
+    return NextResponse.json(
+      { error: { message: err.message || 'Failed to fetch adjustments' } },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  const { errorResponse } = await requireAuth(req);
+  if (errorResponse) return errorResponse;
+
+  const result = await validateBody(req, createAdjustmentSchema);
+  if (!result.success) return result.response;
+
+  const { reference: inputRef, productId, locationId, countedQty, reason } = result.data;
+
+  try {
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      return NextResponse.json(
+        { error: { message: `Product ${productId} does not exist` } },
+        { status: 400 }
+      );
+    }
+
+    const location = await prisma.location.findUnique({ where: { id: locationId } });
+    if (!location) {
+      return NextResponse.json(
+        { error: { message: `Location ${locationId} does not exist` } },
+        { status: 400 }
+      );
+    }
+
+    const stock = await prisma.stock.findUnique({
+      where: {
+        productId_locationId: { productId, locationId },
       },
     });
 
-    return NextResponse.json(adjustments);
-  } catch (error) {
-    console.error('Adjustment GET error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const systemQty = stock ? stock.onHand : 0;
+    const difference = countedQty - systemQty;
+    const reference = await generateAdjustmentRef(inputRef);
+
+    const ops: any[] = [];
+    ops.push(
+      prisma.stock.upsert({
+        where: { productId_locationId: { productId, locationId } },
+        update: { onHand: countedQty },
+        create: { productId, locationId, onHand: countedQty, reserved: 0 },
+      })
+    );
+
+    ops.push(
+      prisma.adjustment.create({
+        data: {
+          reference,
+          productId,
+          locationId,
+          systemQty,
+          countedQty,
+          difference,
+          reason: reason || null,
+        },
+        include: {
+          product: { select: { id: true, name: true, sku: true, unit: true } },
+          location: {
+            select: {
+              id: true,
+              name: true,
+              shortCode: true,
+              warehouse: { select: { id: true, name: true } },
+            },
+          },
+        },
+      })
+    );
+
+    if (difference !== 0) {
+      const moveType = difference > 0 ? 'IN' : 'OUT';
+      const moveQty = Math.abs(difference);
+      const noteReason = reason ? `: ${reason}` : '';
+      const diffSign = difference > 0 ? `+${difference}` : `${difference}`;
+
+      ops.push(
+        prisma.stockMove.create({
+          data: {
+            type: moveType,
+            reference,
+            productId,
+            locationId,
+            quantity: moveQty,
+            notes: `Inventory Adjustment (${diffSign})${noteReason}`,
+          },
+        })
+      );
+    }
+
+    const results = await withRetry(() => prisma.$transaction(ops));
+    const adjustment = results.find((res: any) => res && res.reference && res.systemQty !== undefined);
+
+    const data = {
+      ...adjustment,
+      productName: adjustment.product?.name || '',
+      productSku: adjustment.product?.sku || '',
+      locationName: adjustment.location?.name || '',
+      warehouseName: adjustment.location?.warehouse?.name || '',
+    };
+
+    return NextResponse.json({ data }, { status: 201 });
+  } catch (err: any) {
+    console.error('POST /api/adjustments error:', err);
+    return NextResponse.json(
+      { error: { message: err.message || 'Failed to record adjustment' } },
+      { status: 500 }
+    );
   }
 }
